@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DMYTMVJMH2"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-DMYTMVJMH2');
-  </script>                    
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Bloom Tech Studio — Technology Solutions That Bloom</title>
@@ -534,7 +525,31 @@ function submitForm(){
   if(!fname||!email||!message){alert('Please fill in First Name, Email, and Message.');return;}
   var btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='Sending...';
-  fetch('https://formspree.io/f/YOUR_FORM_ID',{
+  fetch('https://formspree.io/f/mpqygabl',{
     method:'POST',
     headers:{'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify({firstName:fname,lastName
+    body:JSON.stringify({firstName:fname,lastName:document.getElementById('lname').value.trim(),email:email,subject:document.getElementById('subject').value.trim(),message:message})
+  }).then(function(r){
+    if(r.ok){
+      document.getElementById('formSuccess').style.display='flex';
+      document.getElementById('formError').style.display='none';
+      document.getElementById('fname').value='';
+      document.getElementById('lname').value='';
+      document.getElementById('email').value='';
+      document.getElementById('subject').value='';
+      document.getElementById('message').value='';
+      btn.textContent='Message Sent!';
+    } else {
+      document.getElementById('formError').style.display='flex';
+      document.getElementById('formSuccess').style.display='none';
+      btn.disabled=false;btn.textContent='Send Message';
+    }
+  }).catch(function(){
+    document.getElementById('formError').style.display='flex';
+    document.getElementById('formSuccess').style.display='none';
+    btn.disabled=false;btn.textContent='Send Message';
+  });
+}
+</script>
+</body>
+</html>
