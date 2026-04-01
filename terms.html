@@ -23,7 +23,6 @@
     }
     body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--gray-50);color:var(--gray-900);line-height:1.6}
 
-    /* NAV */
     header{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--gray-200)}
     .nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:68px}
     .nav-logo{display:flex;align-items:center;text-decoration:none}
@@ -32,7 +31,6 @@
     .nav-links a{font-size:14px;font-weight:600;color:var(--gray-700);text-decoration:none;padding:8px 14px;border-radius:var(--radius-lg);transition:all .2s}
     .nav-links a:hover{background:var(--bts-primary-light);color:var(--bts-primary)}
 
-    /* LEGAL */
     .legal-page{min-height:100vh;background:white;padding:120px 28px 80px}
     .legal-inner{max-width:740px;margin:0 auto}
     .legal-inner .date{font-size:13px;color:var(--gray-400);margin-bottom:10px}
@@ -47,13 +45,24 @@
     .legal-inner ol li{color:var(--gray-600);margin-bottom:6px;line-height:1.7}
     .highlight-box{background:var(--bts-primary-light);border:1px solid #c7d2fb;border-radius:var(--radius-lg);padding:16px 20px;margin:20px 0}
     .highlight-box p{color:var(--bts-primary);margin-bottom:0;font-weight:600}
-    .sms-box{background:#fef9ec;border:1px solid #fcd34d;border-radius:var(--radius-lg);padding:16px 20px;margin:20px 0}
-    .sms-box p{color:#92400e;margin-bottom:8px}
-    .sms-box p:last-child{margin-bottom:0}
+    .warning-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--radius-lg);padding:16px 20px;margin:20px 0}
+    .warning-box p{color:#7f1d1d;margin-bottom:8px}
+    .warning-box p:last-child{margin-bottom:0}
+    .ugc-box{background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius-lg);padding:16px 20px;margin:20px 0}
+    .ugc-box p{color:#14532d;margin-bottom:8px}
+    .ugc-box p:last-child{margin-bottom:0}
+    .minor-box{background:#fff7ed;border:1px solid #fdba74;border-radius:var(--radius-lg);padding:16px 20px;margin:20px 0}
+    .minor-box p{color:#7c2d12;margin-bottom:8px}
+    .minor-box p:last-child{margin-bottom:0}
     .back-link{display:inline-flex;align-items:center;gap:8px;background:var(--bts-primary);color:white;padding:12px 24px;border-radius:var(--radius-xl);font-size:14px;font-weight:700;text-decoration:none;margin-top:40px;transition:all .2s}
     .back-link:hover{background:var(--bts-primary-dark)}
+    .toc{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:20px 24px;margin:24px 0}
+    .toc p{font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:10px}
+    .toc ol{padding-left:18px;margin:0}
+    .toc ol li{font-size:13px;margin-bottom:4px;line-height:1.6}
+    .toc ol li a{color:var(--gray-600);text-decoration:none}
+    .toc ol li a:hover{color:var(--bts-primary)}
 
-    /* FOOTER */
     footer{background:var(--gray-900);color:var(--gray-400);text-align:center;padding:32px 28px;font-size:13px}
     footer a{color:var(--gray-400);text-decoration:none;margin:0 12px}
     footer a:hover{color:white}
@@ -76,127 +85,213 @@
   <div class="legal-page">
     <div class="legal-inner">
 
-      <div class="date">Last Updated: March 2025</div>
+      <div class="date">Last Updated: April 2025</div>
       <h1>Terms of Service</h1>
 
-      <p>These Terms of Service ("Terms") govern your access to and use of the applications and services provided by Bloom Tech Studio, LLC ("we," "our," or "us"), including <strong>Populr</strong>, <strong>Bloom Money</strong>, <strong>Bloom HOA</strong>, and <strong>Bloom Relate</strong>. By using our services, you agree to be bound by these Terms.</p>
+      <p>These Terms of Service ("Terms") govern your use of the applications and services provided by Bloom Tech Studio, LLC ("we," "our," or "us"), including <strong>Populr</strong>, <strong>Bloom Money</strong>, <strong>Bloom HOA</strong>, and <strong>Bloom Relate</strong> (collectively, the "Services"). By creating an account or using our Services, you agree to these Terms.</p>
+
       <div align="center">
-	      <table border="0">
-		      <tbody>
-			      <tr>
-				      <td><img src="assets/populr-appicon.png" height="100" width="100"></td>
-					  <td>&nbsp;</td>
-					  <td><img src="assets/bloomrelate-appicon.png" height="100" width="100"></td>
-					  <td>&nbsp;</td>
-					  <td><img src="assets/bloomhoa-appicon.png" height="100" width="100"></td>
-					  <td>&nbsp;</td>
-					  <td><img src="assets/bloommoney-appicon.png" height="100" width="100"></td>
-				  </tr>
-			   </tbody>	  
-		  </table>
-	      </div>
-
-
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing or using any Bloom Tech Studio application, you confirm that you are at least 13 years of age and agree to these Terms and our <a href="/privacy.html">Privacy Policy</a>. If you do not agree to these Terms, do not use our services.</p>
-
-      <h2>2. Use of Services</h2>
-      <p>You agree to use our services only for lawful purposes and in accordance with these Terms. You agree not to:</p>
-      <ul>
-        <li>Use the services in any way that violates applicable federal, state, local, or international law or regulation</li>
-        <li>Attempt to gain unauthorized access to any portion of our services or systems</li>
-        <li>Transmit harmful, offensive, or illegal content through our platforms</li>
-        <li>Interfere with or disrupt the integrity or performance of our services</li>
-        <li>Collect or harvest any personally identifiable information from other users without their consent</li>
-        <li>Use the services to send unsolicited commercial communications (spam)</li>
-        <li>Impersonate any person or entity or misrepresent your affiliation with any person or entity</li>
-      </ul>
-
-      <h2>3. SMS Communications and Consent</h2>
-
-      <div class="sms-box">
-        <p><strong>Important: SMS Message Disclosure</strong></p>
-        <p>By providing your phone number and using phone-based features in our applications, you agree to receive SMS messages as described in this section. Message and data rates may apply. Message frequency varies. Reply STOP to opt out. Reply HELP for help.</p>
+        <table border="0">
+          <tbody>
+            <tr>
+              <td><img src="assets/populr-appicon.png" height="100" width="100"></td>
+              <td>&nbsp;</td>
+              <td><img src="assets/bloomrelate-appicon.png" height="100" width="100"></td>
+              <td>&nbsp;</td>
+              <td><img src="assets/bloomhoa-appicon.png" height="100" width="100"></td>
+              <td>&nbsp;</td>
+              <td><img src="assets/bloommoney-appicon.png" height="100" width="100"></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <h3>3.1 Types of SMS Messages</h3>
-      <p>Our applications may send you the following types of SMS messages:</p>
+      <div class="highlight-box">
+        <p>Please read these Terms carefully. Section 7 (User-Generated Content and Moments) and Section 8 (Prohibited Content) describe your responsibilities when uploading photos or videos. Section 9 describes our content moderation practices. Section 10 describes eligibility requirements and restrictions for minor users.</p>
+      </div>
+
+      <div class="toc">
+        <p>Contents</p>
+        <ol>
+          <li><a href="#t1">Acceptance of Terms</a></li>
+          <li><a href="#t2">Eligibility and Account Registration</a></li>
+          <li><a href="#t3">Use of the Services</a></li>
+          <li><a href="#t4">Events and RSVPs</a></li>
+          <li><a href="#t5">SMS Communications</a></li>
+          <li><a href="#t6">Payments, Subscriptions, and Advertising</a></li>
+          <li><a href="#t7">User-Generated Content and Moments</a></li>
+          <li><a href="#t8">Prohibited Content</a></li>
+          <li><a href="#t9">Content Moderation</a></li>
+          <li><a href="#t10">Minor Users (Ages 13–17)</a></li>
+          <li><a href="#t11">Intellectual Property</a></li>
+          <li><a href="#t12">Privacy</a></li>
+          <li><a href="#t13">Disclaimers</a></li>
+          <li><a href="#t14">Limitation of Liability</a></li>
+          <li><a href="#t15">Indemnification</a></li>
+          <li><a href="#t16">Termination</a></li>
+          <li><a href="#t17">Governing Law</a></li>
+          <li><a href="#t18">Changes to These Terms</a></li>
+          <li><a href="#t19">Contact Us</a></li>
+        </ol>
+      </div>
+
+      <h2 id="t1">1. Acceptance of Terms</h2>
+      <p>By accessing or using our Services, you agree to be bound by these Terms and our <a href="/privacy.html">Privacy Policy</a>. If you do not agree to these Terms, you may not use our Services. These Terms apply to all users of our Services, including event organizers, guests, and visitors.</p>
+
+      <h2 id="t2">2. Eligibility and Account Registration</h2>
+      <p>You must be at least 13 years old to create an account and use our Services. By creating an account, you represent that you are at least 13 years of age. If you are under 13, you are not permitted to create an account and we will delete any account we discover belongs to a user under 13.</p>
+      <p>Users between the ages of 13 and 17 may use our Services subject to the additional restrictions described in Section 10. Parents or guardians of minor users are responsible for supervising their child's use of the Services.</p>
+      <p>You agree to provide accurate, current, and complete information during registration and to keep your account information updated. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.</p>
+
+      <h2 id="t3">3. Use of the Services</h2>
+      <p>You agree to use our Services only for lawful purposes and in accordance with these Terms. You agree not to:</p>
       <ul>
-        <li><strong>One-Time Passcodes (OTP / 2FA):</strong> Verification codes sent when you log in using your phone number or verify your identity. These are transactional messages required to access your account.</li>
-        <li><strong>Event Invitations:</strong> SMS invitations sent on behalf of event organizers in the Populr application to guests the organizer has invited by phone number.</li>
-        <li><strong>Event Reminders:</strong> Optional reminder notifications about upcoming events you have RSVP'd to attend. You may disable these in your in-app notification settings.</li>
+        <li>Use the Services in any way that violates applicable federal, state, local, or international laws or regulations</li>
+        <li>Use the Services to harass, abuse, threaten, or harm any person</li>
+        <li>Impersonate any person or entity or misrepresent your affiliation with any person or entity</li>
+        <li>Attempt to gain unauthorized access to any part of the Services or any other system or network connected to the Services</li>
+        <li>Use automated tools (bots, scrapers, crawlers) to access or collect data from the Services without our express written permission</li>
+        <li>Interfere with the proper functioning of the Services</li>
       </ul>
 
-      <h3>3.2 How You Consent</h3>
-      <ol>
-        <li><strong>Login / OTP:</strong> By entering your phone number on the login screen of any Bloom Tech Studio application and tapping the button to receive a verification code, you provide express consent to receive that verification SMS. The screen displays notice that entering your phone number constitutes consent to receive a verification SMS, with a disclosure that message and data rates may apply.</li>
-        <li><strong>Event Invitations (Populr):</strong> As a recipient of an event invitation, you receive a single SMS invitation sent by the event organizer. Each invitation message includes instructions to reply STOP to opt out of future messages from that organizer.</li>
-      </ol>
+      <h2 id="t4">4. Events and RSVPs</h2>
+      <p>Event organizers are responsible for the accuracy of all event information they post, including dates, times, locations, and descriptions. We are not responsible for any inaccuracies in event listings or for events that are cancelled, postponed, or materially changed.</p>
+      <p>RSVPs and guest lists are managed by event organizers. We are not responsible for disputes between organizers and guests regarding event attendance, access, or conduct.</p>
+      <p>Public events may be visible to any user of the Services, including unregistered visitors. By creating a public event, you consent to that event's basic details (title, date, location, and cover image) being discoverable by other users and, if applicable, indexed by search engines.</p>
 
-      <h3>3.3 Opt-Out</h3>
-      <p>You may opt out of SMS messages at any time by:</p>
+      <h2 id="t5">5. SMS Communications</h2>
+      <p>By providing your phone number during registration or when using SMS features, you consent to receive text messages as described in our <a href="/privacy.html#s3">Privacy Policy, Section 3</a>. Message and data rates may apply. You may opt out at any time by replying STOP to any message or by updating your notification preferences in the app.</p>
+      <p>You represent that you are the account holder or authorized user of the phone number you provide. You agree not to provide a phone number that belongs to another person without their consent.</p>
+
+      <h2 id="t6">6. Payments, Subscriptions, and Advertising</h2>
+      <p>Our Services are currently free to use. We may offer optional paid features or subscriptions in the future. Any paid features will be clearly identified, and you will have the opportunity to review pricing and terms before being charged.</p>
+      <p>Our Services are supported by advertising, including ads served by Google AdMob on our mobile applications and Google AdSense on our web applications. We may also display affiliate recommendations within the Services. Affiliate links and sponsored content are always labeled as such.</p>
+      <p>We are not responsible for the content, accuracy, or availability of third-party products or services promoted through ads or affiliate recommendations in our Services.</p>
+
+      <h2 id="t7">7. User-Generated Content and Moments</h2>
+
+      <div class="ugc-box">
+        <p><strong>Your Responsibility for Uploaded Content</strong></p>
+        <p>You are solely responsible for any photos, videos, text, or other content you upload or submit through our Services, including content uploaded to the Moments feature. By uploading content, you represent that you have the right to do so and that the content complies with these Terms.</p>
+      </div>
+
+      <h3>License You Grant Us</h3>
+      <p>By uploading content to our Services, you grant Bloom Tech Studio, LLC a non-exclusive, worldwide, royalty-free, sublicensable license to use, store, display, reproduce, and distribute your content solely for the purposes of operating and improving our Services. We will not use your content for advertising or marketing without your separate consent.</p>
+
+      <h3>Content You Are Responsible For</h3>
+      <p>You represent and warrant that:</p>
       <ul>
-        <li>Replying <strong>STOP</strong> to any SMS we send. You will receive a confirmation message: "You have been unsubscribed from Bloom Tech Studio messages. Reply START to re-subscribe."</li>
-        <li>Updating your notification preferences in the app settings.</li>
-        <li>Contacting us at <a href="/cdn-cgi/l/email-protection#9deee8ededf2efe9ddfff1f2f2f0e9f8fef5eee9e8f9f4f2b3fef2f0"><span class="__cf_email__" data-cfemail="cbb8bebbbba4b9bf8ba9a7a4a4a6bfaea8a3b8bfbeafa2a4e5a8a4a6">[email&#160;protected]</span></a>.</li>
+        <li>You own or have all necessary rights to the content you upload, including any photos or videos in which other people appear</li>
+        <li>Uploading the content does not violate the intellectual property rights, privacy rights, or any other rights of any third party</li>
+        <li>You have obtained the consent of any identifiable individuals depicted in photos or videos you upload, or you are uploading content in a context (such as a social gathering you attended) where such consent is reasonably implied</li>
+        <li>The content complies with our Prohibited Content policy in Section 8</li>
       </ul>
 
-      <h3>3.4 Help</h3>
-      <p>Reply <strong>HELP</strong> to any SMS message to receive assistance. You may also contact us at <a href="/cdn-cgi/l/email-protection#2a595f5a5a45585e6a48464545475e4f4942595e5f4e434504494547"><span class="__cf_email__" data-cfemail="e89b9d9898879a9ca88a848787859c8d8b809b9c9d8c8187c68b8785">[email&#160;protected]</span></a> or visit <a href="https://bloomtechstudio.com">bloomtechstudio.com</a>.</p>
+      <h3>Moments Feature</h3>
+      <p>The Moments feature allows event attendees to upload photos and short videos ("Moments") associated with an event. Moments are visible to other confirmed attendees of the same event. Before any Moment is displayed to other users, it is processed by our automated content moderation system and may be reviewed by our moderation team. Moments that violate these Terms or our community guidelines will be removed. By uploading a Moment, you consent to this review process.</p>
 
-      <h3>3.5 Carriers</h3>
-      <p>Carriers are not liable for delayed or undelivered messages. Message and data rates may apply depending on your mobile carrier plan.</p>
+      <h2 id="t8">8. Prohibited Content</h2>
 
-      <h3>3.6 SMS Privacy</h3>
-      <p>We do not sell, rent, or share your phone number with third-party marketers. Your phone number is used solely to deliver the SMS services described above. Please review our <a href="/privacy.html">Privacy Policy</a> for full details on how we handle your phone number and personal information.</p>
+      <div class="warning-box">
+        <p><strong>Zero Tolerance</strong></p>
+        <p>Uploading content that sexually exploits minors is a serious federal crime. We report all such content to the National Center for Missing and Exploited Children (NCMEC) and cooperate fully with law enforcement.</p>
+      </div>
 
-      <h2>4. User Accounts</h2>
-      <p>You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account. We reserve the right to suspend or terminate accounts that violate these Terms.</p>
-
-      <h2>5. User Content</h2>
-      <p>You retain ownership of content you create and submit through our services ("User Content"). By submitting User Content, you grant Bloom Tech Studio a non-exclusive, worldwide, royalty-free license to use, display, and distribute your content solely as necessary to operate and improve our services.</p>
-      <p>You are solely responsible for your User Content and represent that you have all rights necessary to grant the above license. You agree not to submit content that is illegal, harmful, defamatory, or violates the rights of others.</p>
-
-      <h2>6. Intellectual Property</h2>
-      <p>All content, features, and functionality of our applications — including software, design, graphics, and trademarks — are the exclusive property of Bloom Tech Studio, LLC and its licensors, protected by copyright, trademark, and other intellectual property laws. Our trademarks and brand features may not be used without our prior written consent.</p>
-
-      <h2>7. Free Services and Optional Premium Features</h2>
-      <p>Core features of Bloom Tech Studio applications are provided free of charge. Certain applications may offer optional premium features or subscriptions. Where premium features are offered:</p>
+      <p>You may not upload, post, transmit, or share content that:</p>
       <ul>
-        <li>The applicable fees and terms will be clearly disclosed before purchase</li>
-        <li>Subscriptions may be managed and cancelled through the App Store (iOS) or Google Play (Android) account settings</li>
-        <li>Refund requests are subject to the refund policies of the applicable app store platform</li>
+        <li>Depicts, promotes, or facilitates sexual exploitation of minors in any form</li>
+        <li>Is obscene, pornographic, or sexually explicit, unless within a designated adult content context (we do not currently offer any such contexts)</li>
+        <li>Depicts graphic violence, gore, or real-world harm in a gratuitous or glorifying manner</li>
+        <li>Harasses, threatens, or bullies any individual</li>
+        <li>Promotes hatred, discrimination, or violence against any group based on race, ethnicity, religion, gender, sexual orientation, disability, or national origin</li>
+        <li>Infringes the copyright, trademark, or other intellectual property rights of any third party</li>
+        <li>Contains malware, viruses, or any other malicious code</li>
+        <li>Is false, misleading, or fraudulent</li>
+        <li>Violates any applicable law or regulation</li>
       </ul>
-      <p>We reserve the right to modify, discontinue, or introduce new features at any time. We will provide reasonable notice of material changes to paid features.</p>
+      <p>We reserve the right to remove any content that violates these Terms or that we determine, in our sole discretion, is harmful, offensive, or otherwise objectionable.</p>
 
-      <h2>8. Advertising</h2>
-      <p>Some of our free applications display third-party advertisements. These advertisements help us provide our services at no cost to users. We do not share your personal information with advertisers without your consent. Advertisers are responsible for their own content and practices.</p>
+      <h2 id="t9">9. Content Moderation</h2>
 
-      <h2>9. Third-Party Services</h2>
-      <p>Our applications may integrate with or link to third-party services. We are not responsible for the privacy practices or content of those services. Your use of third-party services is subject to their respective terms and privacy policies.</p>
+      <h3>Automated Moderation</h3>
+      <p>We use automated content screening systems to review photos and videos uploaded to our Services before they are made visible to other users. These systems evaluate content against our prohibited content policies. Content that scores above our risk thresholds is held for human review and is not published until that review is complete.</p>
 
-      <h2>10. Disclaimer of Warranties</h2>
-      <p>Our services are provided "as is" and "as available" without any warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not warrant that our services will be uninterrupted, error-free, or free of viruses or other harmful components.</p>
+      <h3>Human Moderation</h3>
+      <p>Our moderation team reviews content flagged by our automated systems and content reported by users. Moderators may remove content that violates these Terms or our community guidelines.</p>
 
-      <h2>11. Limitation of Liability</h2>
-      <p>To the maximum extent permitted by applicable law, Bloom Tech Studio, LLC and its officers, directors, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of data, loss of profits, or business interruption, resulting from your use of or inability to use our services, even if we have been advised of the possibility of such damages.</p>
-      <p>Our total liability to you for all claims arising from your use of our services shall not exceed the amount you paid us (if any) in the twelve months preceding the claim.</p>
+      <h3>Reporting Content</h3>
+      <p>If you encounter content that you believe violates these Terms, please use the in-app report feature. We take all reports seriously and will review flagged content promptly. You can also report content by contacting us at <a href="mailto:support@bloomtechstudio.com">support@bloomtechstudio.com</a>.</p>
 
-      <h2>12. Indemnification</h2>
-      <p>You agree to indemnify, defend, and hold harmless Bloom Tech Studio, LLC and its affiliates, officers, directors, employees, and agents from any claims, liabilities, damages, or expenses (including reasonable attorneys' fees) arising from your use of our services, your User Content, or your violation of these Terms.</p>
+      <h3>Moderation Decisions</h3>
+      <p>We reserve the right to remove any content and to suspend or terminate any account that violates these Terms, without prior notice and without liability. If your content is removed and you believe this was in error, you may contact us to request a review. We are not obligated to restore removed content or reinstate suspended accounts.</p>
 
-      <h2>13. Termination</h2>
-      <p>We reserve the right to suspend or terminate your access to our services at any time, with or without notice, for conduct that we believe violates these Terms or is harmful to other users, us, third parties, or the public. You may terminate your account at any time by contacting us or using the account deletion feature in the app.</p>
+      <h2 id="t10">10. Minor Users (Ages 13–17)</h2>
 
-      <h2>14. Governing Law</h2>
-      <p>These Terms shall be governed by and construed in accordance with the laws of the State of Texas, without regard to its conflict of law provisions. Any legal action or proceeding arising under these Terms shall be brought exclusively in the state or federal courts located in Dallas County, Texas.</p>
+      <div class="minor-box">
+        <p><strong>Special Protections for Minor Users</strong></p>
+        <p>We take the safety and privacy of users under 18 seriously. Minor accounts are subject to additional restrictions designed to protect their safety and privacy. These restrictions are described below and are enforced by default — minor users cannot opt out of these protections.</p>
+      </div>
 
-      <h2>15. Changes to These Terms</h2>
-      <p>We may update these Terms from time to time. We will notify you of significant changes by posting a notice in our applications or by other reasonable means. Your continued use of our services after any change constitutes your acceptance of the updated Terms. If you do not agree to the updated Terms, you must stop using our services.</p>
+      <h3>Restrictions on Minor Accounts</h3>
+      <p>Users who indicate they are between the ages of 13 and 17 during account creation are subject to the following restrictions:</p>
+      <ul>
+        <li><strong>Content submission:</strong> Moments uploaded by minor accounts are held in a moderation queue and reviewed by a human moderator before being published. A stricter content scoring threshold is applied to content from minor accounts.</li>
+        <li><strong>Profile visibility:</strong> Minor account profiles are not discoverable through general user search or public event browsing. They are only visible to users who share an event with the minor user.</li>
+        <li><strong>Event discovery:</strong> Minor users cannot be shown in public event discovery features.</li>
+        <li><strong>Messaging:</strong> Minor users cannot receive direct messages from users who are not confirmed attendees of a shared event.</li>
+        <li><strong>Mature content:</strong> Content flagged as potentially mature by our moderation systems is not displayed to minor accounts.</li>
+      </ul>
 
-      <h2>16. Contact Us</h2>
+      <h3>Responsibility of Minor Users and Their Guardians</h3>
+      <p>Minor users and their parents or legal guardians are jointly responsible for the minor's compliance with these Terms. If you are a parent or guardian and believe your minor child is using our Services in a way that violates these Terms or that raises safety concerns, please contact us immediately at <a href="mailto:support@bloomtechstudio.com">support@bloomtechstudio.com</a>.</p>
+
+      <h2 id="t11">11. Intellectual Property</h2>
+      <p>The Services and all content created by Bloom Tech Studio, LLC, including but not limited to text, graphics, logos, icons, software, and the overall look and feel of the Services, are owned by or licensed to us and are protected by copyright, trademark, and other intellectual property laws.</p>
+      <p>You may not copy, modify, distribute, sell, or lease any part of our Services or included software, nor may you reverse engineer or attempt to extract the source code of that software, unless you have our written permission or applicable law permits it.</p>
+
+      <h2 id="t12">12. Privacy</h2>
+      <p>Your privacy is important to us. Our <a href="/privacy.html">Privacy Policy</a> describes how we collect, use, and share information about you when you use our Services. By using our Services, you agree to the collection and use of information in accordance with our Privacy Policy.</p>
+
+      <h2 id="t13">13. Disclaimers</h2>
+      <p>Our Services are provided "as is" and "as available" without warranties of any kind, either express or implied. We do not warrant that the Services will be uninterrupted, error-free, or free of viruses or other harmful components. We disclaim all warranties, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement.</p>
+      <p>We are not responsible for the content, accuracy, or reliability of any user-generated content, event listings, or third-party services accessible through our Services.</p>
+
+      <h2 id="t14">14. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by applicable law, Bloom Tech Studio, LLC and its officers, directors, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of data, loss of profits, or loss of goodwill, arising out of or in connection with your use of the Services.</p>
+      <p>Our total liability to you for all claims arising out of or relating to these Terms or the Services shall not exceed the greater of (a) the amount you have paid to us in the twelve months preceding the claim, or (b) one hundred dollars ($100).</p>
+
+      <h2 id="t15">15. Indemnification</h2>
+      <p>You agree to indemnify, defend, and hold harmless Bloom Tech Studio, LLC and its officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses, including reasonable attorneys' fees, arising out of or in connection with: (a) your use of the Services; (b) your violation of these Terms; (c) your violation of any rights of a third party; or (d) any content you upload or submit to the Services.</p>
+
+      <h2 id="t16">16. Termination</h2>
+      <p>We may suspend or terminate your account and access to the Services at any time, with or without cause, and with or without notice. Grounds for termination include, but are not limited to, violation of these Terms, fraudulent or illegal activity, or conduct that we determine is harmful to other users or to the Services.</p>
+      <p>You may terminate your account at any time by contacting us or using the account deletion feature in the app. Upon termination, your right to use the Services ceases immediately. Sections 7 (license grant), 11, 13, 14, 15, and 17 survive termination.</p>
+
+      <h2 id="t17">17. Governing Law</h2>
+      <p>These Terms are governed by and construed in accordance with the laws of the State of Texas, without regard to its conflict of law provisions. Any dispute arising out of or relating to these Terms or the Services shall be resolved in the state or federal courts located in Dallas County, Texas, and you consent to the personal jurisdiction of those courts.</p>
+
+      <h2 id="t18">18. Changes to These Terms</h2>
+      <p>We may update these Terms from time to time. We will notify you of significant changes by posting a notice in our applications or sending you an email. If you continue to use the Services after the updated Terms take effect, you agree to the revised Terms. If you do not agree to the revised Terms, you must stop using the Services.</p>
+
+      <h2 id="t19">19. Contact Us</h2>
       <p>If you have questions about these Terms, please contact us:</p>
       <ul>
-        <li><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection#fb888e8b8b94898fbb99979494968f9e9893888f8e9f9294d5989496"><span class="__cf_email__" data-cfemail="87f4f2f7f7e8f5f3c7e5ebe8e8eaf3e2e4eff4f3f2e3eee8a9e4e8ea">[email&#160;protected]</span></a></li>
+        <li><strong>Email:</strong> <a href="mailto:legal@bloomtechstudio.com">legal@bloomtechstudio.com</a></li>
         <li><strong>Mailing Address:</strong> Bloom Tech Studio, LLC, Dallas, Texas</li>
-        <li><strong>Website:</strong> <a href="https://bloomtechstudio.com">bloomtechstudio.com</a>
+      </ul>
+
+      <a class="back-link" href="https://bloomtechstudio.com">← Back to Bloom Tech Studio</a>
+
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://bloomtechstudio.com">Bloom Tech Studio</a>
+    <a href="/terms.html">Terms of Service</a>
+    <a href="/privacy.html">Privacy Policy</a>
+    <br><br>
+    &copy; 2025 Bloom Tech Studio, LLC. All rights reserved.
+  </footer>
+
+</body>
+</html>
