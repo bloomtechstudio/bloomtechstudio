@@ -1074,7 +1074,8 @@ function showPropCard(data, sourceUrl) {
   const photoWrap = document.getElementById('propPhotoWrap');
 
   if (data.photo) {
-    photoWrap.innerHTML = `<img class="prop-photo" src="${data.photo}" alt="Property photo" onerror="this.parentElement.innerHTML='<div class=prop-photo-placeholder>🏠</div>'">`;
+    const proxied = `/api/image?url=${encodeURIComponent(data.photo)}`;
+    photoWrap.innerHTML = `<img class="prop-photo" src="${proxied}" alt="Property photo" onerror="this.parentElement.innerHTML='<div class=prop-photo-placeholder>🏠</div>'">`;
   } else {
     photoWrap.innerHTML = `<div class="prop-photo-placeholder">🏠</div>`;
   }

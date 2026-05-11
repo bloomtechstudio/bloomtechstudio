@@ -10,6 +10,10 @@ export default {
       return handleListing(request);
     }
 
+    if (url.pathname === '/api/image') {
+      return handleImage(request);
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
@@ -41,6 +45,41 @@ async function handleListing(request) {
     return json(data);
   } catch (e) {
     return json({ error: e.message }, 502);
+  }
+}
+
+async function handleImage(request) {
+  const { searchParams } = new URL(request.url);
+  const imgUrl = searchParams.get('url');
+  if (!imgUrl) return new Response('Missing url', { status: 400 });
+
+  let parsed;
+  try { parsed = new URL(imgUrl); } catch { return new Response('Invalid url', { status: 400 }); }
+
+  const allowed = ['compass.com', 'ssl.cdn-redfin.com', 'photos.zillowstatic.com', 'ar.rdcpix.com', 'p.rdcpix.com', 'rdcpix.com'];
+  if (!allowed.some(h => parsed.hostname.endsWith(h))) {
+    return new Response('Domain not allowed', { status: 403 });
+  }
+
+  try {
+    const res = await fetch(imgUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Referer': `https://${parsed.hostname}/`,
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+    });
+    if (!res.ok) return new Response(`Image fetch failed: ${res.status}`, { status: 502 });
+    const contentType = res.headers.get('Content-Type') || 'image/jpeg';
+    return new Response(res.body, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch(e) {
+    return new Response(e.message, { status: 502 });
   }
 }
 
