@@ -83,6 +83,13 @@ async function handleImage(request) {
   }
 }
 
+function toPhotoUrl(val) {
+  if (!val) return null;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') return val.url ?? val.href ?? val.src ?? null;
+  return null;
+}
+
 function parseListing(html, url) {
   const hostname = new URL(url).hostname.toLowerCase();
   const result = {
@@ -112,7 +119,7 @@ function parseListing(html, url) {
           result.baths       = src.bathrooms ?? src.bathroomCount ?? src.baths;
           result.sqft        = src.squareFeet ?? src.livingArea ?? src.floorSize;
           result.yearBuilt   = src.yearBuilt;
-          result.photo       = src.photos?.[0]?.url ?? src.media?.[0]?.url ?? src.primaryPhoto;
+          result.photo       = toPhotoUrl(src.photos?.[0]) ?? toPhotoUrl(src.media?.[0]) ?? toPhotoUrl(src.primaryPhoto);
           result.description = src.remarks ?? src.description;
           result.propertyType = src.propertyType ?? src.type;
         }
@@ -135,7 +142,7 @@ function parseListing(html, url) {
           result.baths      = bld.bathrooms ?? bld.baths;
           result.sqft       = bld.livingArea ?? bld.floorSize;
           result.yearBuilt  = bld.yearBuilt;
-          result.photo      = bld.photos?.[0]?.url ?? bld.images?.[0];
+          result.photo      = toPhotoUrl(bld.photos?.[0]) ?? toPhotoUrl(bld.images?.[0]);
           result.lotSize    = bld.lotSize;
           result.propertyType = bld.homeType ?? bld.propertyType;
         }
@@ -185,7 +192,7 @@ function parseListing(html, url) {
             if (price && parseInt(String(price).replace(/\D/g, '')) > 10000) {
               result.price       = parseInt(String(price).replace(/\D/g, ''));
               result.address     = result.address ?? node.name ?? node.address?.streetAddress;
-              result.photo       = result.photo ?? (Array.isArray(node.image) ? node.image[0] : node.image);
+              result.photo       = result.photo ?? toPhotoUrl(Array.isArray(node.image) ? node.image[0] : node.image);
               result.beds        = result.beds ?? node.numberOfRooms;
               result.description = result.description ?? node.description;
               break;
