@@ -1136,7 +1136,14 @@ async function searchByAddress(address) {
 }
 
 async function runDCADLookup(address, status, prefixHtml = '') {
-  const clean = address.toUpperCase().replace(/\b(DALLAS|TX|TEXAS|\d{5})\b/g,'').replace(/\s+/g,' ').trim();
+  // Extract unit before building DCAD query — SITEADDRESS never contains unit info
+  const unitMatch = address.match(/\b(?:unit|apt|apartment|suite|ste|#)\s*([a-z0-9]+)\b/i);
+  const unit = unitMatch ? unitMatch[1].toUpperCase() : null;
+  const clean = address.toUpperCase()
+    .replace(/\b(?:unit|apt|apartment|suite|ste)\s*[a-z0-9]+\b/gi, '')
+    .replace(/#\s*[a-z0-9]+\b/gi, '')
+    .replace(/\b(DALLAS|TX|TEXAS|\d{5})\b/g, '')
+    .replace(/\s+/g, ' ').trim();
   const where = encodeURIComponent(`UPPER(SITEADDRESS) LIKE '%${clean}%'`);
   const fields = 'PARCELID,SITEADDRESS,OWNERNME1,IMPVALUE,LNDVALUE,CNTASSDVAL,PRVASSDVAL,REVALYR';
   const url = `https://maps.dcad.org/prdwa/rest/services/Property/ParcelQuery/MapServer/4/query?where=${where}&outFields=${fields}&returnGeometry=false&f=json`;
@@ -1154,10 +1161,7 @@ async function runDCADLookup(address, status, prefixHtml = '') {
       status.innerHTML = prefixHtml + `No DCAD parcel found for "<em>${clean}</em>". Try a shorter address fragment.`;
       return;
     }
-    // If address contains a unit, try to match the right parcel by the unit
-    // suffix encoded in the PARCELID (e.g. 00C1453000000000G = Unit G)
-    const unitMatch = address.match(/\b(?:unit|apt|apartment|suite|ste|#)\s*([a-z0-9]+)\b/i);
-    const unit = unitMatch ? unitMatch[1].toUpperCase() : null;
+    // Pick the right parcel — if a unit was specified, match by PARCELID suffix
     let selectedFeature = data.features[0];
     let unitMatched = false;
     if (unit && data.features.length > 1) {
