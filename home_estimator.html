@@ -1108,26 +1108,30 @@ async function searchByAddress(address) {
 
   const compassQ = encodeURIComponent(address + ' Dallas TX');
   const compassSearchUrl = `https://www.compass.com/homes-for-sale/?q=${compassQ}`;
+  const compassFallback = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`;
 
-  // Try to pull listing data from Compass search via proxy
-  let prefixHtml = '';
+  // Try Zillow _rb URL — redirects to the property detail page which has SSR'd listing data
+  const addressSlug = address.trim().replace(/\s+/g, '-');
+  const zillowUrl = `https://www.zillow.com/homes/${encodeURIComponent(addressSlug + '-Dallas-TX')}_rb/`;
+
+  let prefixHtml = compassFallback;
   try {
-    const res = await fetch(`/api/listing?url=${encodeURIComponent(compassSearchUrl)}`);
+    status.textContent = 'Looking up listing data…';
+    const res = await fetch(`/api/listing?url=${encodeURIComponent(zillowUrl)}`);
     const d = await res.json();
-    if (!d.error && d.price) {
-      document.getElementById('price').value = d.price;
-      document.getElementById('taxableVal').value = d.price;
-      calc();
-      showPropCard(d, compassSearchUrl);
-      gtag('event', 'listing_price_parsed', { source: 'compass.com', price: d.price });
-    } else if (!d.error && (d.photo || d.address || d.beds)) {
-      showPropCard(d, compassSearchUrl);
-      prefixHtml = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">View on Compass →</a><br>`;
-    } else {
-      prefixHtml = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`;
+    console.log('[listing lookup]', d);
+    if (!d.error && (d.price || d.photo || d.address || d.beds)) {
+      if (d.price) {
+        document.getElementById('price').value = d.price;
+        document.getElementById('taxableVal').value = d.price;
+        calc();
+        gtag('event', 'listing_price_parsed', { source: 'zillow.com', price: d.price });
+      }
+      showPropCard(d, zillowUrl);
+      prefixHtml = '';
     }
-  } catch {
-    prefixHtml = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`;
+  } catch(e) {
+    console.error('[listing lookup error]', e);
   }
 
   await runDCADLookup(address, status, prefixHtml);
@@ -1137,7 +1141,7 @@ async function searchByAddress(address) {
 async function runDCADLookup(address, status, prefixHtml = '') {
   const clean = address.toUpperCase().replace(/\b(DALLAS|TX|TEXAS|\d{5})\b/g,'').replace(/\s+/g,' ').trim();
   const where = encodeURIComponent(`UPPER(SITEADDRESS) LIKE '%${clean}%'`);
-  const fields = 'PARCELID,SITEADDRESS,OWNERNME1,IMPVALUE,LNDVALUE,CNTASSDVAL,PRVASSDVAL';
+  const fields = 'PARCELID,SITEADDRESS,OWNERNME1,IMPVALUE,LNDVALUE,CNTASSDVAL,PRVASSDVAL,REVALYR';
   const url = `https://maps.dcad.org/prdwa/rest/services/Property/ParcelQuery/MapServer/4/query?where=${where}&outFields=${fields}&returnGeometry=false&f=json`;
 
   try {
@@ -1154,11 +1158,27 @@ async function runDCADLookup(address, status, prefixHtml = '') {
       return;
     }
     const f = data.features[0].attributes;
-    document.getElementById('taxableVal').value = f.CNTASSDVAL || document.getElementById('taxableVal').value;
+    const isLandOnly = !f.IMPVALUE || f.IMPVALUE < 1000;
+    const listingPrice = parseFloat(document.getElementById('price').value) || 0;
+    const revalYr = f.REVALYR ? parseInt(f.REVALYR) : null;
+    const nextValYr = revalYr ? revalYr + 2 : null;
+
+    if (isLandOnly && listingPrice > 0) {
+      document.getElementById('taxableVal').value = listingPrice;
+    } else {
+      document.getElementById('taxableVal').value = f.CNTASSDVAL || document.getElementById('taxableVal').value;
+    }
     if (f.LNDVALUE) document.getElementById('prevTaxableVal').value = f.LNDVALUE;
     calc();
     const dcadLink = `https://www.dallascad.org/AcctDetail.aspx?ID=${f.PARCELID}`;
-    status.style.color = 'var(--green)';
+
+    const landOnlyWarning = isLandOnly ? `
+      <div style="margin-top:10px; padding:10px 12px; background:var(--amber-bg); border:1px solid var(--amber); border-radius:var(--radius-sm); color:var(--amber-text); font-size:12px; line-height:1.5;">
+        <strong>⚠ Land-only record</strong> — DCAD shows no improvement value, meaning this property was appraised as vacant land (no structure). ${listingPrice > 0 ? `The listing price ($${listingPrice.toLocaleString()}) has been used as an estimate for taxable value.` : 'Enter the listing price above to estimate taxable value.'}<br>
+        <strong>Important:</strong> This estimate is based on the listing price and does not account for improvements made since the last valuation. The appraisal district will reassess once construction is complete and the property sells.${nextValYr ? ` The next scheduled revaluation is expected around <strong>${nextValYr}</strong> (prior valuation year: ${revalYr}).` : ''}
+      </div>` : '';
+
+    status.style.color = isLandOnly ? 'var(--amber)' : 'var(--green)';
     status.innerHTML = prefixHtml +
       `<strong>${f.SITEADDRESS}</strong> — ${f.OWNERNME1}<br>
       Appraised: <strong>$${(f.CNTASSDVAL||0).toLocaleString()}</strong> &nbsp;|&nbsp;
@@ -1166,7 +1186,8 @@ async function runDCADLookup(address, status, prefixHtml = '') {
       Improvement: $${(f.IMPVALUE||0).toLocaleString()} &nbsp;|&nbsp;
       Prev: $${(f.PRVASSDVAL||0).toLocaleString()}<br>
       <span style="color:var(--text3);">Account: <a href="${dcadLink}" target="_blank" style="color:var(--accent);">${f.PARCELID} — View DCAD detail →</a></span>`
-      + (data.features.length > 1 ? `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — showing first result.</span>` : '');
+      + (data.features.length > 1 ? `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — showing first result.</span>` : '')
+      + landOnlyWarning;
     gtag('event', 'dcad_lookup', { address: f.SITEADDRESS });
   } catch(e) {
     status.style.color = 'var(--red)';
@@ -1178,7 +1199,7 @@ function extractAddressFromURL(url) {
   try {
     const { hostname, pathname } = new URL(url);
     let slug = null;
-    if (hostname.includes('compass.com'))   slug = pathname.match(/\/homedetails\/([^/]+)\//)?.[1];
+    if (hostname.includes('compass.com'))   slug = pathname.match(/\/listing\/([^/]+)\//)?.[1] ?? pathname.match(/\/homedetails\/([^/]+)\//)?.[1];
     if (hostname.includes('zillow.com'))    slug = pathname.match(/\/homedetails\/([^_/]+)/)?.[1];
     if (hostname.includes('redfin.com'))    slug = pathname.match(/\/[A-Z]{2}\/[^/]+\/([^/]+)\/home/)?.[1];
     if (hostname.includes('realtor.com'))   slug = pathname.match(/\/realestateandhomes-detail\/([^_/]+(?:_[^_/]+){0,2})/)?.[1]?.replace(/_/g,'-');
