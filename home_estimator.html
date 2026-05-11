@@ -184,6 +184,26 @@
       <div class="field-input"><span class="prefix">$</span><input type="number" id="taxableVal" value="335000" step="1000" min="0" oninput="calc()"></div>
     </div>
     <div class="field-row">
+      <div class="field-label">Homestead exemption<small>Primary residence — amounts vary by jurisdiction</small></div>
+      <div class="field-input" style="gap:10px;">
+        <label style="display:flex; align-items:center; gap:7px; cursor:pointer;">
+          <input type="checkbox" id="homesteadToggle" onchange="calc()" style="width:16px; height:16px; accent-color:var(--accent); cursor:pointer;">
+          <span id="homesteadToggleLabel" style="font-size:13px; color:var(--text2);">Not applied</span>
+        </label>
+      </div>
+    </div>
+    <div id="homesteadDetails" style="display:none; background:var(--blue-bg); border:1px solid #b5d4f4; border-radius:var(--radius-sm); padding:10px 12px; margin:2px 0 6px;">
+      <div style="font-size:11px; font-weight:600; color:var(--blue-text); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.06em;">Exemption amounts (per DCAD 2026)</div>
+      <div class="field-row" style="border:none; padding:2px 0;">
+        <div class="field-label" style="font-size:12px;">Dallas ISD<small>Flat dollar amount — state-set</small></div>
+        <div class="field-input"><span class="prefix">$</span><input type="number" id="isdExemption" value="185000" step="1000" min="0" style="width:100px;" oninput="calc()"></div>
+      </div>
+      <div class="field-row" style="border:none; padding:2px 0;">
+        <div class="field-label" style="font-size:12px;">City, County, College, Hospital<small>% of appraised value</small></div>
+        <div class="field-input"><input type="number" id="otherExemptPct" value="20" step="1" min="0" max="100" style="width:60px;" oninput="calc()"> <span class="prefix">%</span></div>
+      </div>
+    </div>
+    <div class="field-row">
       <div class="field-label">City of Dallas</div>
       <div class="field-input"><input type="number" id="rCity" value="0.6988" step="0.0001" min="0" oninput="calc()"> <span class="prefix">per $100</span></div>
       <div class="field-value" id="tCity">$2,341</div>
@@ -216,7 +236,7 @@
       <div class="field-label">Monthly tax escrow</div>
       <div class="field-value" id="taxMonthlyOut">$622</div>
     </div>
-    <div class="info-box"><strong>Texas Homestead Exemption:</strong> File after closing for your primary residence. The $100,000 ISD exemption alone saves ~$83/mo on the school district portion.</div>
+    <div class="info-box"><strong>Texas Homestead Exemption:</strong> File after closing for your primary residence. Per DCAD 2026: Dallas ISD exemption is $185,000 flat; City, County, College &amp; Hospital each exempt 20% of appraised value. Toggle above to model with exemption applied.</div>
   </div>
 
   <!-- PREVIOUS PERIOD TAX COMPARISON -->
@@ -469,14 +489,14 @@
 
   <div class="info-box">
     <strong>Homestead Exemption reminder:</strong> Filing after closing saves approximately
-    <span class="highlight" id="homesteadSavings">$83/mo</span> via the $100k Dallas ISD exemption.
-    Annual savings: <span class="highlight" id="homesteadAnnual">$996/yr</span>.
+    <span class="highlight" id="homesteadSavings">—</span> across all jurisdictions.
+    Annual savings: <span class="highlight" id="homesteadAnnual">—</span>.
+    Toggle exemption in the tax section to model with it applied.
   </div>
 
   <div style="margin-top:10px;">
     <a class="link-btn" href="https://www.choosetexaspower.org/compare-offers/?zipCode=75210&m=movey" target="_blank">⚡ Compare electricity plans for 75210 →</a>
     <a class="link-btn" href="https://dallascityhall.com/departments/waterutilities/Pages/dallas-water-calculator.aspx" target="_blank" style="margin-top:6px; display:inline-block;">💧 City of Dallas water calculator →</a>
-    <a class="link-btn" href="https://www.compass.com/homedetails/4020-Hamilton-Ave-Dallas-TX-75210/19CLA9_pid/" target="_blank" style="margin-top:6px; display:inline-block;">🏠 View 4020 Hamilton listing →</a>
   </div>
 </div><!-- /summary-panel -->
 </div><!-- /layout -->
@@ -735,20 +755,29 @@ function calc() {
 
   // Taxes
   const tv = v('taxableVal');
-  const tCity    = tv * v('rCity')    / 100;
-  const tISD     = tv * v('rISD')     / 100;
-  const tCounty  = tv * v('rCounty')  / 100;
-  const tCollege = tv * v('rCollege') / 100;
-  const tHosp    = tv * v('rHospital')/ 100;
+  const homestead = document.getElementById('homesteadToggle').checked;
+  document.getElementById('homesteadToggleLabel').textContent = homestead ? 'Applied ✓' : 'Not applied';
+  document.getElementById('homesteadDetails').style.display = homestead ? 'block' : 'none';
+  const otherPct = homestead ? (v('otherExemptPct') / 100) : 0;
+  const isdExempt = homestead ? v('isdExemption') : 0;
+  const tCity    = Math.max(0, tv * (1 - otherPct)) * v('rCity')    / 100;
+  const tISD     = Math.max(0, tv - isdExempt)      * v('rISD')     / 100;
+  const tCounty  = Math.max(0, tv * (1 - otherPct)) * v('rCounty')  / 100;
+  const tCollege = Math.max(0, tv * (1 - otherPct)) * v('rCollege') / 100;
+  const tHosp    = Math.max(0, tv * (1 - otherPct)) * v('rHospital')/ 100;
   const taxTotal = tCity + tISD + tCounty + tCollege + tHosp;
   const taxMo = taxTotal / 12;
   set('tCity',fmt(tCity)); set('tISD',fmt(tISD)); set('tCounty',fmt(tCounty));
   set('tCollege',fmt(tCollege)); set('tHospital',fmt(tHosp));
   set('taxTotalOut',fmt(taxTotal)); set('taxMonthlyOut',fmt(taxMo));
 
-  const homesteadMo = (100000 * v('rISD') / 100) / 12;
+  const _isdEx = v('isdExemption'), _oPct = v('otherExemptPct') / 100;
+  const homesteadAnnualSavings =
+    tv * _oPct * (v('rCity') + v('rCounty') + v('rCollege') + v('rHospital')) / 100
+    + Math.min(_isdEx, tv) * v('rISD') / 100;
+  const homesteadMo = homesteadAnnualSavings / 12;
   set('homesteadSavings', fmt(homesteadMo) + '/mo');
-  set('homesteadAnnual', fmt(homesteadMo*12) + '/yr');
+  set('homesteadAnnual', fmt(homesteadAnnualSavings) + '/yr');
 
   // Previous-period tax comparison
   const prevTV = v('prevTaxableVal');
