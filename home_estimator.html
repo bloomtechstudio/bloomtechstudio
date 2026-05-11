@@ -508,12 +508,14 @@
     <div class="field-row">
       <div class="field-label">Home warranty<small><a href="https://hellosuper.com/?r=7504" target="_blank" style="color:var(--accent);">hellosuper.com</a></small></div>
       <div class="field-input">
-        <select id="maintenanceSelect" onchange="document.getElementById('maintenance').value=this.value;calc()" style="min-width:0; width:auto;">
+        <select id="maintenanceSelect" onchange="(function(s){var c=document.getElementById('maintenanceCustom');var m=document.getElementById('maintenance');if(s.value==='custom'){c.style.display='inline-block';m.value='';m.focus();}else{c.style.display='none';m.value=s.value;calc();}})(this)" style="min-width:0; width:auto;">
           <option value="54" selected>$54/mo</option>
           <option value="77">$77/mo</option>
           <option value="122">$122/mo</option>
+          <option value="custom">Custom…</option>
         </select>
-        <input type="number" id="maintenance" value="54" step="1" min="0" oninput="calc()" style="width:80px;">
+        <input type="number" id="maintenanceCustom" placeholder="$/mo" step="1" min="0" style="width:72px; display:none;" oninput="document.getElementById('maintenance').value=this.value;calc()">
+        <input type="number" id="maintenance" value="54" step="1" min="0" style="display:none;" oninput="calc()">
       </div>
     </div>
     <div class="field-row">
