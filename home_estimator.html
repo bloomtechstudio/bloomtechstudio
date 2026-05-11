@@ -994,10 +994,35 @@ async function searchByAddress(address) {
   const btn = document.getElementById('searchBtn');
   status.style.display = 'block';
   status.style.color = 'var(--text2)';
-  status.textContent = 'Looking up tax records…';
+  status.textContent = 'Searching listing and tax records…';
   btn.disabled = true;
+  hidePropCard();
+
   const compassQ = encodeURIComponent(address + ' Dallas TX');
-  await runDCADLookup(address, status, `<a href="https://www.compass.com/homes-for-sale/?q=${compassQ}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`);
+  const compassSearchUrl = `https://www.compass.com/homes-for-sale/?q=${compassQ}`;
+
+  // Try to pull listing data from Compass search via proxy
+  let prefixHtml = '';
+  try {
+    const res = await fetch(`/api/listing?url=${encodeURIComponent(compassSearchUrl)}`);
+    const d = await res.json();
+    if (!d.error && d.price) {
+      document.getElementById('price').value = d.price;
+      document.getElementById('taxableVal').value = d.price;
+      calc();
+      showPropCard(d, compassSearchUrl);
+      gtag('event', 'listing_price_parsed', { source: 'compass.com', price: d.price });
+    } else if (!d.error && (d.photo || d.address || d.beds)) {
+      showPropCard(d, compassSearchUrl);
+      prefixHtml = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">View on Compass →</a><br>`;
+    } else {
+      prefixHtml = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`;
+    }
+  } catch {
+    prefixHtml = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`;
+  }
+
+  await runDCADLookup(address, status, prefixHtml);
   btn.disabled = false;
 }
 

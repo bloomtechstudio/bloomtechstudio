@@ -60,17 +60,22 @@ function parseListing(html, url) {
       const pp = nd?.props?.pageProps;
 
       if (hostname.includes('compass')) {
+        // Detail page: single listing
         const l = pp?.listing ?? pp?.listingData ?? pp?.initialProps?.listing;
-        if (l) {
-          result.price      = l.listPrice ?? l.price;
-          result.address    = l.displayAddress ?? l.streetAddress ?? l.fullAddress;
-          result.beds       = l.bedrooms ?? l.bedroomCount ?? l.beds;
-          result.baths      = l.bathrooms ?? l.bathroomCount ?? l.baths;
-          result.sqft       = l.squareFeet ?? l.livingArea ?? l.floorSize;
-          result.yearBuilt  = l.yearBuilt;
-          result.photo      = l.photos?.[0]?.url ?? l.media?.[0]?.url ?? l.primaryPhoto;
-          result.description = l.remarks ?? l.description;
-          result.propertyType = l.propertyType ?? l.type;
+        // Search results page: array of listings — take the first
+        const listings = pp?.listings ?? pp?.searchResults?.listings
+          ?? pp?.initialSearchContext?.listings ?? pp?.searchContext?.listings;
+        const src = l ?? listings?.[0];
+        if (src) {
+          result.price       = src.listPrice ?? src.price;
+          result.address     = src.displayAddress ?? src.streetAddress ?? src.fullAddress;
+          result.beds        = src.bedrooms ?? src.bedroomCount ?? src.beds;
+          result.baths       = src.bathrooms ?? src.bathroomCount ?? src.baths;
+          result.sqft        = src.squareFeet ?? src.livingArea ?? src.floorSize;
+          result.yearBuilt   = src.yearBuilt;
+          result.photo       = src.photos?.[0]?.url ?? src.media?.[0]?.url ?? src.primaryPhoto;
+          result.description = src.remarks ?? src.description;
+          result.propertyType = src.propertyType ?? src.type;
         }
       }
 
