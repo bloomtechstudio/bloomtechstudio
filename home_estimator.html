@@ -95,6 +95,12 @@
   .rate-table tr.selected td { background: var(--blue-bg); color: var(--blue-text); }
   .rate-table tr.selected td:last-child { color: var(--blue-text); }
 
+  /* Loan type toggle */
+  .loan-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; width: fit-content; }
+  .loan-toggle label { padding: 6px 20px; font-size: 13px; font-weight: 500; cursor: pointer; background: var(--surface2); color: var(--text2); transition: background 0.15s, color 0.15s; user-select: none; }
+  .loan-toggle label.active { background: var(--accent); color: white; }
+  .loan-toggle input[type=radio] { display: none; }
+
   /* Property preview card */
   .prop-card { display: grid; grid-template-columns: 150px 1fr; gap: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 10px; }
   .prop-photo { width: 150px; height: 110px; object-fit: cover; display: block; background: var(--border); }
@@ -157,6 +163,15 @@
   <div class="card">
     <div class="card-title">Purchase &amp; Loan</div>
     <div class="field-row">
+      <div class="field-label">Loan type</div>
+      <div class="field-input">
+        <div class="loan-toggle">
+          <label id="lblFHA" class="active" onclick="setLoanType('fha')"><input type="radio" name="loanType" id="loanFHA" value="fha" checked><span>FHA</span></label>
+          <label id="lblConv" onclick="setLoanType('conventional')"><input type="radio" name="loanType" id="loanConv" value="conventional"><span>Conventional</span></label>
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
       <div class="field-label">Purchase price</div>
       <div class="field-input"><span class="prefix">$</span><input type="number" id="price" value="335000" step="1000" min="50000" oninput="calc()"></div>
     </div>
@@ -177,6 +192,10 @@
     <div class="field-row">
       <div class="field-label">Base loan amount</div>
       <div class="field-value" id="baseLoanOut">$323,275</div>
+    </div>
+    <div class="field-row" id="loanLimitRow" style="display:none;">
+      <div class="field-label" style="color:var(--amber-text);">⚠ Exceeds loan limit<small id="loanLimitNote"></small></div>
+      <div class="field-value" id="loanLimitOut" style="color:var(--amber-text); font-size:12px;"></div>
     </div>
     <div class="field-row">
       <div class="field-label">Loan term</div>
@@ -202,7 +221,7 @@
   </div>
 
   <!-- FHA MIP -->
-  <div class="card">
+  <div class="card" id="mipCard">
     <div class="card-title">FHA Mortgage Insurance (MIP)</div>
     <div class="field-row">
       <div class="field-label">Upfront MIP rate<small>1.75% of base loan — financed into loan at closing</small></div>
@@ -215,6 +234,21 @@
       <div class="field-value" id="monthlyMIPOut">$148/mo</div>
     </div>
     <div class="info-box"><strong>FHA MIP lasts the life of the loan</strong> with &lt;10% down. Put 10%+ down and it drops after 11 years. Best exit: refinance to conventional once you reach 20% equity (typically 3–5 yrs).</div>
+  </div>
+
+  <!-- CONVENTIONAL PMI -->
+  <div class="card" id="pmiCard" style="display:none;">
+    <div class="card-title">Private Mortgage Insurance (PMI)</div>
+    <div class="field-row">
+      <div class="field-label">Annual PMI rate<small>Typically 0.3–1.5% depending on LTV &amp; credit score</small></div>
+      <div class="field-input"><input type="number" id="pmiRate" value="0.8" step="0.05" min="0" max="3" oninput="calc()"> <span class="prefix">%</span></div>
+      <div class="field-value" id="monthlyPMIOut">—</div>
+    </div>
+    <div class="field-row" id="pmiLTVRow" style="display:none;">
+      <div class="field-label">Current LTV</div>
+      <div class="field-value" id="currentLTV">—</div>
+    </div>
+    <div id="pmiInfoBox" class="info-box" style="margin-top:8px;"></div>
   </div>
 
   <!-- PROPERTY TAXES -->
@@ -487,21 +521,21 @@
 <div class="summary-panel">
 
   <div class="metric-grid">
-    <div class="metric-card"><div class="mlbl">Monthly mortgage (PITI+MIP)</div><div class="mval" id="cardPITI">—</div></div>
+    <div class="metric-card"><div class="mlbl" id="lblCardPITI">Monthly mortgage (PITI+MIP)</div><div class="mval" id="cardPITI">—</div></div>
     <div class="metric-card"><div class="mlbl">Total monthly (all-in)</div><div class="mval" id="cardTotal">—</div></div>
     <div class="metric-card"><div class="mlbl">Down payment</div><div class="mval" id="cardDP">—</div></div>
     <div class="metric-card"><div class="mlbl">Cash at closing</div><div class="mval" id="cardCash">—</div></div>
-    <div class="metric-card wide"><div class="mlbl">Total loan (incl. financed items + UFMIP)</div><div class="mval" id="cardLoan">—</div></div>
+    <div class="metric-card wide"><div class="mlbl" id="lblCardLoan">Total loan (incl. financed items + UFMIP)</div><div class="mval" id="cardLoan">—</div></div>
   </div>
 
   <div class="summary-card">
     <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.4); border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:8px; margin-bottom:4px;">Monthly Payment Breakdown</div>
     <div class="sum-hdr">Mortgage</div>
     <div class="sum-row"><span class="lbl">Principal &amp; interest</span><span class="amt" id="sumPI">—</span></div>
-    <div class="sum-row"><span class="lbl">FHA MIP (monthly)</span><span class="amt" id="sumMIP">—</span></div>
+    <div class="sum-row"><span class="lbl" id="sumMIPLabel">FHA MIP (monthly)</span><span class="amt" id="sumMIP">—</span></div>
     <div class="sum-row"><span class="lbl">Property tax escrow</span><span class="amt" id="sumTax">—</span></div>
     <div class="sum-row"><span class="lbl">Homeowners insurance escrow</span><span class="amt" id="sumIns">—</span></div>
-    <div class="sum-row subtotal"><span class="lbl">Total PITI + MIP</span><span class="amt" id="sumPITI">—</span></div>
+    <div class="sum-row subtotal"><span class="lbl" id="sumPITILabel">Total PITI + MIP</span><span class="amt" id="sumPITI">—</span></div>
     <div class="sum-hdr">Utilities</div>
     <div class="sum-row"><span class="lbl">Electricity</span><span class="amt" id="sumElec">—</span></div>
     <div class="sum-row"><span class="lbl">Water + sewer + trash</span><span class="amt" id="sumWater">—</span></div>
@@ -525,7 +559,7 @@
       <div class="field-input"><span class="prefix">$</span><input type="number" id="closingCosts" value="9000" step="500" min="0" oninput="calc()"></div>
     </div>
     <div class="field-row" style="font-weight:600;"><div class="field-label">Total estimated cash to close</div><div class="field-value" id="uiTotal">—</div></div>
-    <div class="info-box" style="margin-top:8px;"><strong>Note:</strong> Upfront MIP is financed into the loan — not paid at closing. Closing costs cover origination, appraisal, title insurance, prepaid interest, and escrow setup.</div>
+    <div class="info-box" style="margin-top:8px;" id="upfrontNote"><strong>Note:</strong> Upfront MIP (1.75%) is financed into the loan — not paid at closing. Closing costs cover origination, appraisal, title insurance, prepaid interest, and escrow setup.</div>
   </div>
 
   <div class="info-box">
@@ -747,6 +781,53 @@ function syncWater(src) {
   if (src === 'slider') inp.value = sl.value; else sl.value = inp.value;
   calc();
 }
+function setLoanType(type) {
+  const isFHA = type === 'fha';
+  document.getElementById('loanFHA').checked = isFHA;
+  document.getElementById('loanConv').checked = !isFHA;
+  document.getElementById('lblFHA').className = 'active' + (isFHA ? ' active' : '');
+  document.getElementById('lblFHA').style.cssText = isFHA ? 'background:var(--accent);color:white;' : '';
+  document.getElementById('lblConv').style.cssText = !isFHA ? 'background:var(--accent);color:white;' : '';
+
+  document.getElementById('mipCard').style.display  = isFHA ? '' : 'none';
+  document.getElementById('pmiCard').style.display  = isFHA ? 'none' : '';
+
+  // Swap rate scenarios
+  const sel = document.getElementById('rateScenario');
+  sel.innerHTML = isFHA
+    ? `<option value="5.75">Min — 5.75% (best-case FHA)</option>
+       <option value="6.125" selected>Median — 6.125% (current FHA avg)</option>
+       <option value="6.75">Max — 6.75% (high scenario)</option>
+       <option value="custom">Custom rate…</option>`
+    : `<option value="6.25">Min — 6.25% (excellent credit / 20%+ down)</option>
+       <option value="6.875" selected>Median — 6.875% (current conventional avg)</option>
+       <option value="7.5">Max — 7.5% (lower credit / higher LTV)</option>
+       <option value="custom">Custom rate…</option>`;
+
+  // Down payment minimum
+  const dpMin = isFHA ? 3.5 : 3;
+  document.getElementById('dpSlider').min = dpMin;
+  document.getElementById('dpPctInput').min = dpMin;
+  if (parseFloat(document.getElementById('dpPctInput').value) < dpMin) {
+    document.getElementById('dpPctInput').value = dpMin;
+    document.getElementById('dpSlider').value = dpMin;
+  }
+
+  // Update labels
+  document.getElementById('sumMIPLabel').textContent  = isFHA ? 'FHA MIP (monthly)' : 'PMI (monthly)';
+  document.getElementById('sumPITILabel').textContent = isFHA ? 'Total PITI + MIP' : 'Total PITI + PMI';
+  document.getElementById('lblCardPITI').textContent  = isFHA ? 'Monthly mortgage (PITI+MIP)' : 'Monthly mortgage (PITI+PMI)';
+  document.getElementById('lblCardLoan').textContent  = isFHA ? 'Total loan (incl. financed items + UFMIP)' : 'Total loan (incl. financed items)';
+  document.getElementById('upfrontNote').innerHTML    = isFHA
+    ? '<strong>Note:</strong> Upfront MIP (1.75%) is financed into the loan — not paid at closing. Closing costs cover origination, appraisal, title insurance, prepaid interest, and escrow setup.'
+    : '<strong>Note:</strong> Conventional loans have no upfront MIP. Closing costs cover origination, appraisal, title insurance, prepaid interest, and escrow setup.';
+  document.querySelector('.page-header .sub').innerHTML =
+    `All values editable &middot; ${isFHA ? 'FHA' : 'Conventional'} loan model &middot; Dallas-area tax &amp; utility defaults &middot; May 2026`;
+
+  toggleCustomRate();
+  calc();
+}
+
 function toggleCustomRate() {
   document.getElementById('customRateRow').style.display =
     document.getElementById('rateScenario').value === 'custom' ? 'flex' : 'none';
@@ -765,6 +846,8 @@ function calc() {
   set('dpDollar', fmt(dp));
   set('baseLoanOut', fmt(baseLoan));
 
+  const isFHA = document.getElementById('loanFHA').checked;
+
   // Furniture
   let furnFinanced = 0, furnCash = 0;
   presetItems.forEach(item => {
@@ -779,20 +862,45 @@ function calc() {
   set('furnFinancedOut', fmt(furnFinanced));
   set('furnCashOut', fmt(furnCash));
 
-  // Loan + MIP
-  const ufmipRate = v('ufmipRate') / 100;
-  const loanBeforeMIP = baseLoan + furnFinanced;
-  const ufmip = loanBeforeMIP * ufmipRate;
-  const totalLoan = loanBeforeMIP + ufmip;
-  set('ufmipOut', fmt(ufmip));
+  // Loan + mortgage insurance
+  const loanBeforeMI = baseLoan + furnFinanced;
+  let ufmip = 0, monthlyMI = 0;
+
+  if (isFHA) {
+    ufmip = loanBeforeMI * (v('ufmipRate') / 100);
+    monthlyMI = (loanBeforeMI * v('annualMIPRate') / 100) / 12;
+    set('ufmipOut', fmt(ufmip));
+    set('monthlyMIPOut', fmt(monthlyMI) + '/mo');
+  } else {
+    const ltv = loanBeforeMI / price;
+    const pmiActive = dpPct < 0.20;
+    monthlyMI = pmiActive ? (loanBeforeMI * v('pmiRate') / 100) / 12 : 0;
+    set('monthlyPMIOut', pmiActive ? fmt(monthlyMI) + '/mo' : '$0 — LTV ≤ 80%');
+    document.getElementById('pmiLTVRow').style.display = pmiActive ? '' : 'none';
+    set('currentLTV', (ltv * 100).toFixed(1) + '%');
+    const equityNeeded = fmt(loanBeforeMI - price * 0.80);
+    document.getElementById('pmiInfoBox').innerHTML = pmiActive
+      ? `<strong>PMI active</strong> — LTV is ${(ltv*100).toFixed(1)}%. Cancels automatically at 80% LTV (~${equityNeeded} more equity needed). No upfront PMI cost.`
+      : `<strong>No PMI required</strong> — down payment ≥ 20% (LTV ${(ltv*100).toFixed(1)}%).`;
+  }
+
+  const totalLoan = loanBeforeMI + ufmip;
+
+  // Loan limit warning
+  const loanLimit = isFHA ? 524225 : 806500;
+  const limitRow = document.getElementById('loanLimitRow');
+  if (loanBeforeMI > loanLimit) {
+    limitRow.style.display = '';
+    set('loanLimitNote', isFHA ? ' FHA Dallas County 2026 limit' : ' Conventional conforming limit 2026');
+    set('loanLimitOut', `$${Math.round(loanBeforeMI).toLocaleString()} > $${loanLimit.toLocaleString()}`);
+  } else {
+    limitRow.style.display = 'none';
+  }
 
   const rs = document.getElementById('rateScenario').value;
   const rate = (rs === 'custom' ? v('customRate') : parseFloat(rs)) / 100;
   const nper = v('term') * 12;
   const pi = pmt(rate, nper, totalLoan);
-
-  const monthlyMIP = (loanBeforeMIP * v('annualMIPRate') / 100) / 12;
-  set('monthlyMIPOut', fmt(monthlyMIP) + '/mo');
 
   // Taxes
   const tv = v('taxableVal');
@@ -858,7 +966,7 @@ function calc() {
   const insMo = annualIns / 12;
   set('insMonthlyOut', fmt(insMo));
 
-  const pitiMIP = pi + monthlyMIP + taxMo + insMo;
+  const pitiMIP = pi + monthlyMI + taxMo + insMo;
 
   // Electricity
   const elecBill = (v('kwhInput') * v('elecRate')) / 100;
@@ -877,7 +985,7 @@ function calc() {
   const lawn=v('lawn'), maint=v('maintenance'), other=v('other');
   const grand = pitiMIP + elecBill + waterTotal + internet + gas + hoa + lawn + maint + other;
 
-  set('sumPI',fmt(pi)); set('sumMIP',fmt(monthlyMIP));
+  set('sumPI',fmt(pi)); set('sumMIP',fmt(monthlyMI));
   set('sumTax',fmt(taxMo)); set('sumIns',fmt(insMo));
   set('sumPITI',fmt(pitiMIP));
   set('sumElec',fmt(elecBill)); set('sumWater',fmt(waterTotal));
