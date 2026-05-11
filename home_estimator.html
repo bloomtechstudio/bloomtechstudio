@@ -112,6 +112,19 @@
 <div class="layout">
 <div class="left-col">
 
+  <!-- DCAD ADDRESS LOOKUP -->
+  <div class="card">
+    <div class="card-title">DCAD Property Lookup <span style="font-weight:400; color:var(--text3); text-transform:none; letter-spacing:0;">&mdash; auto-fill from address</span></div>
+    <div class="field-row">
+      <div class="field-label">Property address<small>Dallas address — pulls appraised value from DCAD</small></div>
+      <div class="field-input" style="flex:1; gap:8px;">
+        <input type="text" id="dcadAddress" placeholder="e.g. 4020 Hamilton Ave" style="flex:1; width:auto; min-width:180px;" onkeydown="if(event.key==='Enter')lookupDCAD()">
+        <button class="btn-add" onclick="lookupDCAD()" id="dcadBtn">Look up</button>
+      </div>
+    </div>
+    <div id="dcadStatus" style="font-size:12px; margin-top:8px; display:none;"></div>
+  </div>
+
   <!-- PURCHASE & LOAN -->
   <div class="card">
     <div class="card-title">Purchase &amp; Loan</div>
@@ -862,6 +875,56 @@ window.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') addCustomItem();
   });
 });
+
+async function lookupDCAD() {
+  const addr = document.getElementById('dcadAddress').value.trim().toUpperCase();
+  if (!addr) return;
+  const status = document.getElementById('dcadStatus');
+  const btn = document.getElementById('dcadBtn');
+  status.style.display = 'block';
+  status.style.color = 'var(--text2)';
+  status.textContent = 'Looking up…';
+  btn.disabled = true;
+
+  const where = encodeURIComponent(`UPPER(SITEADDRESS) LIKE '%${addr}%'`);
+  const fields = 'PARCELID,SITEADDRESS,OWNERNME1,IMPVALUE,LNDVALUE,CNTASSDVAL,PRVASSDVAL';
+  const url = `https://maps.dcad.org/prdwa/rest/services/Property/ParcelQuery/MapServer/4/query?where=${where}&outFields=${fields}&returnGeometry=false&f=json`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) {
+      status.style.color = 'var(--red)';
+      status.textContent = `DCAD error: ${data.error.message}`;
+    } else if (!data.features || data.features.length === 0) {
+      status.style.color = 'var(--amber)';
+      status.textContent = 'No matching parcels found. Try a shorter address fragment.';
+    } else {
+      const f = data.features[0].attributes;
+      // Auto-fill fields
+      document.getElementById('price').value = f.CNTASSDVAL || '';
+      document.getElementById('taxableVal').value = f.CNTASSDVAL || '';
+      if (f.LNDVALUE) document.getElementById('prevTaxableVal').value = f.LNDVALUE;
+      calc();
+      status.style.color = 'var(--green)';
+      status.innerHTML = `<strong>${f.SITEADDRESS}</strong> &mdash; Owner: ${f.OWNERNME1}<br>
+        Appraised: $${(f.CNTASSDVAL||0).toLocaleString()} &nbsp;|&nbsp;
+        Land only: $${(f.LNDVALUE||0).toLocaleString()} &nbsp;|&nbsp;
+        Improvement: $${(f.IMPVALUE||0).toLocaleString()} &nbsp;|&nbsp;
+        Prev. value: $${(f.PRVASSDVAL||0).toLocaleString()}<br>
+        <span style="color:var(--text3);">Account: ${f.PARCELID} &mdash; Purchase price &amp; taxable value auto-filled above.</span>`;
+      if (data.features.length > 1) {
+        status.innerHTML += `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — showing first result. Try a more specific address.</span>`;
+      }
+    }
+  } catch (e) {
+    status.style.color = 'var(--red)';
+    status.innerHTML = `<strong>CORS blocked</strong> — browser prevented the request to maps.dcad.org.<br>
+      We'll need a Cloudflare Worker proxy to make this work.<br>
+      <span style="color:var(--text3); font-size:11px;">${e.message}</span>`;
+  }
+  btn.disabled = false;
+}
 
 buildRateTable();
 buildPresetFurniture();
