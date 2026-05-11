@@ -1106,33 +1106,19 @@ async function searchByAddress(address) {
   btn.disabled = true;
   hidePropCard();
 
-  const compassQ = encodeURIComponent(address + ' Dallas TX');
-  const compassSearchUrl = `https://www.compass.com/homes-for-sale/?q=${compassQ}`;
-  const compassFallback = `<a href="${compassSearchUrl}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`;
+  // Real estate sites block server-side fetches (bot detection). For address searches,
+  // DCAD gives tax data automatically. Listing price/photo requires pasting a URL.
+  const slug = address.trim().replace(/\s+/g, '-');
+  const compassUrl  = `https://www.compass.com/homes-for-sale/?q=${encodeURIComponent(address + ' Dallas TX')}`;
+  const zillowUrl   = `https://www.zillow.com/homes/${slug}-Dallas-TX_rb/`;
+  const redfinUrl   = `https://www.redfin.com/TX/Dallas/${slug}/home/`;
 
-  // Try Zillow _rb URL — redirects to the property detail page which has SSR'd listing data
-  const addressSlug = address.trim().replace(/\s+/g, '-');
-  const zillowUrl = `https://www.zillow.com/homes/${encodeURIComponent(addressSlug + '-Dallas-TX')}_rb/`;
-
-  let prefixHtml = compassFallback;
-  try {
-    status.textContent = 'Looking up listing data…';
-    const res = await fetch(`/api/listing?url=${encodeURIComponent(zillowUrl)}`);
-    const d = await res.json();
-    console.log('[listing lookup]', d);
-    if (!d.error && (d.price || d.photo || d.address || d.beds)) {
-      if (d.price) {
-        document.getElementById('price').value = d.price;
-        document.getElementById('taxableVal').value = d.price;
-        calc();
-        gtag('event', 'listing_price_parsed', { source: 'zillow.com', price: d.price });
-      }
-      showPropCard(d, zillowUrl);
-      prefixHtml = '';
-    }
-  } catch(e) {
-    console.error('[listing lookup error]', e);
-  }
+  const prefixHtml = `<div style="margin-bottom:6px; font-size:12px;">
+    Find listing: <a href="${compassUrl}" target="_blank" style="color:var(--accent);">Compass</a> &middot;
+    <a href="${zillowUrl}" target="_blank" style="color:var(--accent);">Zillow</a> &middot;
+    <a href="${redfinUrl}" target="_blank" style="color:var(--accent);">Redfin</a>
+    <span style="color:var(--text3);"> — paste the listing URL above to auto-fill price &amp; photo</span>
+  </div>`;
 
   await runDCADLookup(address, status, prefixHtml);
   btn.disabled = false;
