@@ -1054,7 +1054,7 @@ async function searchByURL(url) {
     showPropCard(data, url);
 
   } catch(e) {
-    const is403 = e.message.includes('403');
+    const is403 = e.message.includes('403') || e.message.includes('429');
     const siteName = (() => { try { return new URL(url).hostname.replace('www.',''); } catch { return 'listing site'; } })();
     priceHtml = is403
       ? `<span style="color:var(--amber-text);">${siteName} blocks automated access — <a href="${url}" target="_blank" style="color:var(--accent);">view listing →</a></span><br>`
