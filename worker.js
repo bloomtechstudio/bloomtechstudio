@@ -169,8 +169,8 @@ function parseListing(html, url) {
         if (info) {
           result.price      = info.listingPrice?.amount ?? info.price?.amount;
           result.address    = info.streetAddress ?? info.address;
-          result.beds       = info.beds;
-          result.baths      = info.baths;
+          result.beds       = info.beds?.value  ?? info.beds  ?? info.numBeds  ?? info.bedrooms;
+          result.baths      = info.baths?.value ?? info.baths ?? info.numBaths ?? info.bathrooms;
           result.sqft       = info.sqFt?.value ?? info.sqft;
           result.yearBuilt  = info.yearBuilt?.value ?? info.yearBuilt;
           result.photo      = info.mediaBrowserInfo?.photos?.[0]?.url;
