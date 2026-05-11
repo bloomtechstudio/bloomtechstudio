@@ -94,6 +94,17 @@
   .rate-table td:last-child { text-align: right; font-weight: 600; color: var(--accent); }
   .rate-table tr.selected td { background: var(--blue-bg); color: var(--blue-text); }
   .rate-table tr.selected td:last-child { color: var(--blue-text); }
+
+  /* Property preview card */
+  .prop-card { display: grid; grid-template-columns: 150px 1fr; gap: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 10px; }
+  .prop-photo { width: 150px; height: 110px; object-fit: cover; display: block; background: var(--border); }
+  .prop-photo-placeholder { width: 150px; height: 110px; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--text3); }
+  .prop-info { padding: 10px 12px 10px 0; }
+  .prop-address { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .prop-price { font-size: 20px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+  .prop-details { font-size: 12px; color: var(--text2); display: flex; flex-wrap: wrap; gap: 8px; }
+  .prop-details span { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; }
+  @media (max-width: 500px) { .prop-card { grid-template-columns: 1fr; } .prop-photo, .prop-photo-placeholder { width: 100%; } }
   .section-note { font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
   .highlight { background: var(--green-bg); color: var(--green-text); padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 12px; }
   .link-btn { display: inline-block; font-size: 12px; color: var(--accent); text-decoration: none; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 4px 10px; margin-top: 8px; }
@@ -129,6 +140,14 @@
       <div class="field-input" style="flex:1; gap:8px;">
         <input type="text" id="propertySearch" placeholder="4020 Hamilton Ave  —or—  https://www.compass.com/…" style="flex:1; width:auto; min-width:200px; font-size:13px;" onkeydown="if(event.key==='Enter')performSearch()">
         <button class="btn-add" onclick="performSearch()" id="searchBtn" style="white-space:nowrap;">Search</button>
+      </div>
+    </div>
+    <div id="propCard" class="prop-card" style="display:none;">
+      <div id="propPhotoWrap"></div>
+      <div class="prop-info">
+        <div class="prop-address" id="propAddress"></div>
+        <div class="prop-price" id="propPrice"></div>
+        <div class="prop-details" id="propDetails"></div>
       </div>
     </div>
     <div id="searchStatus" style="font-size:12px; margin-top:10px; line-height:1.7; display:none;"></div>
@@ -901,30 +920,34 @@ async function searchByURL(url) {
   const btn = document.getElementById('searchBtn');
   status.style.display = 'block';
   status.style.color = 'var(--text2)';
-  status.textContent = 'Fetching listing page…';
+  status.textContent = 'Fetching listing…';
   btn.disabled = true;
+  hidePropCard();
 
   let listingAddress = extractAddressFromURL(url);
   let priceHtml = '';
 
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const html = await res.text();
-    const parsed = parseListingHTML(html, url);
-    if (parsed.price) {
-      document.getElementById('price').value = parsed.price;
-      document.getElementById('taxableVal').value = parsed.price;
+    const proxyUrl = `/api/listing?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    if (data.price) {
+      document.getElementById('price').value = data.price;
+      document.getElementById('taxableVal').value = data.price;
       calc();
-      priceHtml = `List price: <strong>$${Number(parsed.price).toLocaleString()}</strong> — auto-filled above.<br>`;
-      gtag('event', 'listing_price_parsed', { source: new URL(url).hostname, price: parsed.price });
+      priceHtml = '';
+      gtag('event', 'listing_price_parsed', { source: new URL(url).hostname, price: data.price });
     }
-    if (parsed.address && !listingAddress) listingAddress = parsed.address;
+
+    if (data.address && !listingAddress) listingAddress = data.address;
+    showPropCard(data, url);
+
   } catch(e) {
-    const blocked = e.message.toLowerCase().includes('failed to fetch') || e.message.toLowerCase().includes('networkerror');
-    priceHtml = blocked
-      ? `<span style="color:var(--amber-text);">⚠ Listing page blocked by CORS — price not auto-filled. A Cloudflare Worker proxy would fix this.</span><br>`
-      : `<span style="color:var(--red-text);">Fetch error: ${e.message}</span><br>`;
+    priceHtml = `<span style="color:var(--red-text);">Listing fetch error: ${e.message}</span><br>`;
+    // still try address from URL slug
   }
 
   if (listingAddress) {
@@ -932,9 +955,38 @@ async function searchByURL(url) {
     await runDCADLookup(listingAddress, status, priceHtml);
   } else {
     status.style.color = 'var(--amber)';
-    status.innerHTML = priceHtml + `Couldn't extract an address from the URL to look up tax records. Try searching the address directly.`;
+    status.innerHTML = priceHtml + `Couldn't extract an address from the URL. Try typing the address directly.`;
   }
   btn.disabled = false;
+}
+
+function showPropCard(data, sourceUrl) {
+  if (!data.price && !data.address && !data.photo) return;
+  const card = document.getElementById('propCard');
+  const photoWrap = document.getElementById('propPhotoWrap');
+
+  if (data.photo) {
+    photoWrap.innerHTML = `<img class="prop-photo" src="${data.photo}" alt="Property photo" onerror="this.parentElement.innerHTML='<div class=prop-photo-placeholder>🏠</div>'">`;
+  } else {
+    photoWrap.innerHTML = `<div class="prop-photo-placeholder">🏠</div>`;
+  }
+
+  document.getElementById('propAddress').textContent = data.address || '';
+  document.getElementById('propPrice').textContent = data.price ? `$${Number(data.price).toLocaleString()}` : '';
+
+  const chips = [];
+  if (data.beds)      chips.push(`${data.beds} bed`);
+  if (data.baths)     chips.push(`${data.baths} bath`);
+  if (data.sqft)      chips.push(`${Number(data.sqft).toLocaleString()} sqft`);
+  if (data.yearBuilt) chips.push(`Built ${data.yearBuilt}`);
+  if (data.propertyType) chips.push(data.propertyType);
+  document.getElementById('propDetails').innerHTML = chips.map(c => `<span>${c}</span>`).join('');
+
+  card.style.display = 'grid';
+}
+
+function hidePropCard() {
+  document.getElementById('propCard').style.display = 'none';
 }
 
 async function searchByAddress(address) {
