@@ -1154,7 +1154,17 @@ async function runDCADLookup(address, status, prefixHtml = '') {
       status.innerHTML = prefixHtml + `No DCAD parcel found for "<em>${clean}</em>". Try a shorter address fragment.`;
       return;
     }
-    const f = data.features[0].attributes;
+    // If address contains a unit, try to match the right parcel by the unit
+    // suffix encoded in the PARCELID (e.g. 00C1453000000000G = Unit G)
+    const unitMatch = address.match(/\b(?:unit|apt|apartment|suite|ste|#)\s*([a-z0-9]+)\b/i);
+    const unit = unitMatch ? unitMatch[1].toUpperCase() : null;
+    let selectedFeature = data.features[0];
+    let unitMatched = false;
+    if (unit && data.features.length > 1) {
+      const match = data.features.find(feat => feat.attributes.PARCELID?.toUpperCase().endsWith(unit));
+      if (match) { selectedFeature = match; unitMatched = true; }
+    }
+    const f = selectedFeature.attributes;
     const isLandOnly = !f.IMPVALUE || f.IMPVALUE < 1000;
     const listingPrice = parseFloat(document.getElementById('price').value) || 0;
     const revalYr = f.REVALYR ? parseInt(f.REVALYR) : null;
@@ -1183,7 +1193,8 @@ async function runDCADLookup(address, status, prefixHtml = '') {
       Improvement: $${(f.IMPVALUE||0).toLocaleString()} &nbsp;|&nbsp;
       Prev: $${(f.PRVASSDVAL||0).toLocaleString()}<br>
       <span style="color:var(--text3);">Account: <a href="${dcadLink}" target="_blank" style="color:var(--accent);">${f.PARCELID} — View DCAD detail →</a></span>`
-      + (data.features.length > 1 ? `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — showing first result.</span>` : '')
+      + (data.features.length > 1 && unitMatched ? `<br><span style="color:var(--green-text);">Unit ${unit} matched from ${data.features.length} parcels.</span>` : '')
+      + (data.features.length > 1 && !unitMatched ? `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — include "Unit X" in your search to select a specific unit.</span>` : '')
       + landOnlyWarning;
     gtag('event', 'dcad_lookup', { address: f.SITEADDRESS });
   } catch(e) {
