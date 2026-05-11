@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Purchase Estimator</title>
+<style>
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --surface2: #f8f7f3;
+    --border: #e2e0d8; --border2: #ccc9bc;
+    --text: #1a1a18; --text2: #5a5850; --text3: #9a9688;
+    --blue: #1a5fa8; --blue-bg: #e8f0fb; --blue-text: #0d3d72;
+    --green: #1a7a4a; --green-bg: #e8f5ee; --green-text: #0d4a2a;
+    --amber: #c47a00; --amber-bg: #fdf3dc; --amber-text: #7a4a00;
+    --red: #c02828; --red-bg: #fdeaea; --red-text: #7a1010;
+    --accent: #1a5fa8; --radius: 10px; --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+  .page-header { background: var(--text); color: white; padding: 1.25rem 2rem; }
+  .page-header h1 { font-size: 18px; font-weight: 600; }
+  .page-header .sub { font-size: 12px; opacity: 0.55; margin-top: 2px; }
+  .layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 14px; }
+  .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .field-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--bg); }
+  .field-row:last-child { border-bottom: none; }
+  .field-label { flex: 1; font-size: 13px; color: var(--text2); min-width: 0; }
+  .field-label small { display: block; font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .field-input { display: flex; align-items: center; gap: 6px; }
+  input[type=number], input[type=text], select { padding: 5px 8px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); font-size: 13px; font-family: inherit; transition: border-color 0.15s; }
+  input[type=number]:focus, input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
+  input[type=number] { width: 110px; text-align: right; }
+  input[type=text] { width: 140px; }
+  select { min-width: 210px; cursor: pointer; }
+  .field-value { font-size: 13px; font-weight: 600; color: var(--text); min-width: 90px; text-align: right; }
+  .prefix { font-size: 13px; color: var(--text3); }
+  .slider-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
+  input[type=range] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 4px; min-width: 80px; }
+  .slider-val { font-size: 13px; font-weight: 600; min-width: 44px; text-align: right; color: var(--accent); }
+
+  /* Preset furniture rows: checkbox | name | badge | dropdown */
+  .furn-item { display: grid; grid-template-columns: 18px 1fr auto auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--bg); }
+  .furn-item:last-child { border-bottom: none; }
+  /* Custom item rows: checkbox | text-input | badge | $-prefix | number-input | remove-btn */
+  .custom-item { display: grid; grid-template-columns: 18px 1fr auto auto auto auto; gap: 6px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--bg); }
+  .custom-item:last-child { border-bottom: none; }
+  .furn-check { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+  .furn-name { font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .furn-name small { display: block; font-size: 11px; color: var(--text3); white-space: normal; }
+  .furn-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; white-space: nowrap; cursor: default; }
+  .badge-financed { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-cash     { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-skip     { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+  .furn-sel { font-size: 12px; padding: 3px 6px; min-width: 0; }
+  .btn-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 4px; }
+  .btn-remove:hover { background: var(--red-bg); color: var(--red); }
+  .add-row { display: flex; gap: 8px; align-items: center; padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .btn-add { padding: 6px 14px; background: var(--blue-bg); color: var(--blue-text); border: 1px solid #b5d4f4; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-add:hover { background: #d0e4f8; }
+
+  /* Summary */
+  .summary-panel { position: sticky; top: 16px; }
+  .summary-card { background: var(--text); color: white; border-radius: var(--radius); padding: 1.25rem; margin-bottom: 14px; }
+  .sum-hdr { font-size: 10px; color: rgba(255,255,255,0.38); text-transform: uppercase; letter-spacing: 0.07em; padding-bottom: 3px; margin: 8px 0 3px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sum-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 13px; }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-row .lbl { color: rgba(255,255,255,0.65); flex: 1; padding-right: 8px; }
+  .sum-row .amt { font-weight: 600; white-space: nowrap; }
+  .sum-row.subtotal { border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px; margin-top: 4px; }
+  .sum-row.subtotal .lbl { color: #7eb8f7; font-weight: 600; }
+  .sum-row.subtotal .amt { color: #7eb8f7; }
+  .sum-row.grand { font-size: 15px; padding-top: 10px; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.25); border-bottom: none; }
+  .sum-row.grand .lbl { color: white; }
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; text-align: center; }
+  .metric-card .mlbl { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .metric-card .mval { font-size: 20px; font-weight: 700; color: var(--blue); }
+  .metric-card.wide { grid-column: 1/-1; }
+  .info-box { font-size: 12px; color: var(--text2); background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 10px; line-height: 1.6; }
+  .info-box strong { color: var(--text); }
+  .rate-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+  .rate-table th { text-align: left; color: var(--text3); font-weight: 500; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+  .rate-table td { padding: 5px 8px; border-bottom: 1px solid var(--bg); color: var(--text2); }
+  .rate-table tr:last-child td { border-bottom: none; }
+  .rate-table td:last-child { text-align: right; font-weight: 600; color: var(--accent); }
+  .rate-table tr.selected td { background: var(--blue-bg); color: var(--blue-text); }
+  .rate-table tr.selected td:last-child { color: var(--blue-text); }
+  .section-note { font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
+  .highlight { background: var(--green-bg); color: var(--green-text); padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 12px; }
+  .link-btn { display: inline-block; font-size: 12px; color: var(--accent); text-decoration: none; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 4px 10px; margin-top: 8px; }
+  .link-btn:hover { background: var(--blue-bg); }
+
+  /* Tax comparison table */
+  .cmp-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 0; padding: 7px 10px; font-size: 13px; border-bottom: 1px solid var(--bg); align-items: baseline; }
+  .cmp-row:last-child { border-bottom: none; }
+  .cmp-row > div:first-child { color: var(--text2); }
+  .cmp-row > div:nth-child(2), .cmp-row > div:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+  .cmp-row > div:nth-child(4) { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--red); }
+  .cmp-row.total { background: var(--surface2); font-weight: 600; border-top: 1px solid var(--border); }
+  .cmp-row.total > div:first-child { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>🏠 Home Purchase Cost Estimator</h1>
+  <div class="sub">All values editable &middot; FHA loan model &middot; Dallas-area tax &amp; utility defaults &middot; May 2026</div>
+</div>
+
+<div class="layout">
+<div class="left-col">
+
+  <!-- PURCHASE & LOAN -->
+  <div class="card">
+    <div class="card-title">Purchase &amp; Loan</div>
+    <div class="field-row">
+      <div class="field-label">Purchase price</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="price" value="335000" step="1000" min="50000" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Down payment<small>Slide or type %</small></div>
+      <div class="field-input" style="flex:1; max-width:290px;">
+        <div class="slider-wrap">
+          <input type="range" id="dpSlider" min="3" max="25" step="0.5" value="3.5" oninput="syncDP('slider')">
+          <span class="slider-val" id="dpPctOut">3.5%</span>
+        </div>
+        <input type="number" id="dpPctInput" value="3.5" step="0.5" min="3" max="25" style="width:64px;" oninput="syncDP('input')">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Down payment amount</div>
+      <div class="field-value" id="dpDollar">$11,725</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Base loan amount</div>
+      <div class="field-value" id="baseLoanOut">$323,275</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Loan term</div>
+      <div class="field-input"><select id="term" onchange="calc()">
+        <option value="30" selected>30 years</option>
+        <option value="20">20 years</option>
+        <option value="15">15 years</option>
+      </select></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Interest rate scenario</div>
+      <div class="field-input"><select id="rateScenario" onchange="toggleCustomRate(); calc()">
+        <option value="5.75">Min — 5.75% (best-case FHA)</option>
+        <option value="6.125" selected>Median — 6.125% (current FHA avg)</option>
+        <option value="6.75">Max — 6.75% (high scenario)</option>
+        <option value="custom">Custom rate…</option>
+      </select></div>
+    </div>
+    <div class="field-row" id="customRateRow" style="display:none;">
+      <div class="field-label">Custom interest rate</div>
+      <div class="field-input"><input type="number" id="customRate" value="6.5" step="0.125" min="2" max="15" oninput="calc()"> <span class="prefix">%</span></div>
+    </div>
+  </div>
+
+  <!-- FHA MIP -->
+  <div class="card">
+    <div class="card-title">FHA Mortgage Insurance (MIP)</div>
+    <div class="field-row">
+      <div class="field-label">Upfront MIP rate<small>1.75% of base loan — financed into loan at closing</small></div>
+      <div class="field-input"><input type="number" id="ufmipRate" value="1.75" step="0.05" min="0" max="5" oninput="calc()"> <span class="prefix">%</span></div>
+      <div class="field-value" id="ufmipOut">$5,657</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Annual MIP rate<small>0.55% for 30yr / &lt;10% down &middot; 0.50% for 10–15% down</small></div>
+      <div class="field-input"><input type="number" id="annualMIPRate" value="0.55" step="0.05" min="0" max="2" oninput="calc()"> <span class="prefix">%</span></div>
+      <div class="field-value" id="monthlyMIPOut">$148/mo</div>
+    </div>
+    <div class="info-box"><strong>FHA MIP lasts the life of the loan</strong> with &lt;10% down. Put 10%+ down and it drops after 11 years. Best exit: refinance to conventional once you reach 20% equity (typically 3–5 yrs).</div>
+  </div>
+
+  <!-- PROPERTY TAXES -->
+  <div class="card">
+    <div class="card-title">Property Taxes (per $100 of taxable value)</div>
+    <div class="field-row">
+      <div class="field-label">Taxable value<small>Typically matches purchase price for new construction</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="taxableVal" value="335000" step="1000" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">City of Dallas</div>
+      <div class="field-input"><input type="number" id="rCity" value="0.6988" step="0.0001" min="0" oninput="calc()"> <span class="prefix">per $100</span></div>
+      <div class="field-value" id="tCity">$2,341</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Dallas ISD</div>
+      <div class="field-input"><input type="number" id="rISD" value="0.993835" step="0.0001" min="0" oninput="calc()"> <span class="prefix">per $100</span></div>
+      <div class="field-value" id="tISD">$3,329</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Dallas County</div>
+      <div class="field-input"><input type="number" id="rCounty" value="0.2155" step="0.0001" min="0" oninput="calc()"> <span class="prefix">per $100</span></div>
+      <div class="field-value" id="tCounty">$722</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Dallas College</div>
+      <div class="field-input"><input type="number" id="rCollege" value="0.106575" step="0.0001" min="0" oninput="calc()"> <span class="prefix">per $100</span></div>
+      <div class="field-value" id="tCollege">$357</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Parkland Hospital</div>
+      <div class="field-input"><input type="number" id="rHospital" value="0.212" step="0.0001" min="0" oninput="calc()"> <span class="prefix">per $100</span></div>
+      <div class="field-value" id="tHospital">$710</div>
+    </div>
+    <div class="field-row" style="font-weight:600;">
+      <div class="field-label">Total annual taxes</div>
+      <div class="field-value" id="taxTotalOut">$7,460</div>
+    </div>
+    <div class="field-row" style="font-weight:600;">
+      <div class="field-label">Monthly tax escrow</div>
+      <div class="field-value" id="taxMonthlyOut">$622</div>
+    </div>
+    <div class="info-box"><strong>Texas Homestead Exemption:</strong> File after closing for your primary residence. The $100,000 ISD exemption alone saves ~$83/mo on the school district portion.</div>
+  </div>
+
+  <!-- PREVIOUS PERIOD TAX COMPARISON -->
+  <div class="card">
+    <div class="card-title">Previous Tax Period Comparison</div>
+    <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">
+      Enter the property's <strong>previous taxable value</strong> (e.g., land-only valuation before new construction was added). The same tax rates above are applied to both values to show the year-over-year change you should expect.
+    </p>
+    <div class="field-row">
+      <div class="field-label">Previous taxable value<small>e.g., land-only value from prior tax year</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="prevTaxableVal" value="59780" step="100" min="0" oninput="calc()"></div>
+    </div>
+
+    <div style="margin-top:12px; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;">
+      <div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap:0; background:var(--surface2); padding:8px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); border-bottom:1px solid var(--border);">
+        <div>Jurisdiction</div>
+        <div style="text-align:right;">Previous</div>
+        <div style="text-align:right;">Current</div>
+        <div style="text-align:right;">Δ Change</div>
+      </div>
+      <div class="cmp-row"><div>City of Dallas</div><div id="pCity">—</div><div id="cCity">—</div><div id="dCity">—</div></div>
+      <div class="cmp-row"><div>Dallas ISD</div><div id="pISD">—</div><div id="cISD">—</div><div id="dISD">—</div></div>
+      <div class="cmp-row"><div>Dallas County</div><div id="pCounty">—</div><div id="cCounty">—</div><div id="dCounty">—</div></div>
+      <div class="cmp-row"><div>Dallas College</div><div id="pCollege">—</div><div id="cCollege">—</div><div id="dCollege">—</div></div>
+      <div class="cmp-row"><div>Parkland Hospital</div><div id="pHosp">—</div><div id="cHosp">—</div><div id="dHosp">—</div></div>
+      <div class="cmp-row total"><div>Annual total</div><div id="pAnnual">—</div><div id="cAnnual">—</div><div id="dAnnual">—</div></div>
+      <div class="cmp-row total"><div>Monthly escrow</div><div id="pMonthly">—</div><div id="cMonthly">—</div><div id="dMonthly">—</div></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:12px;">
+      <div style="background:var(--amber-bg); border:1px solid #f0d090; border-radius:var(--radius-sm); padding:10px; text-align:center;">
+        <div style="font-size:10px; color:var(--amber-text); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">Annual increase</div>
+        <div style="font-size:18px; font-weight:700; color:var(--amber-text);" id="bigAnnualDelta">—</div>
+      </div>
+      <div style="background:var(--amber-bg); border:1px solid #f0d090; border-radius:var(--radius-sm); padding:10px; text-align:center;">
+        <div style="font-size:10px; color:var(--amber-text); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">Monthly increase</div>
+        <div style="font-size:18px; font-weight:700; color:var(--amber-text);" id="bigMonthlyDelta">—</div>
+      </div>
+      <div style="background:var(--red-bg); border:1px solid #f0b5b5; border-radius:var(--radius-sm); padding:10px; text-align:center;">
+        <div style="font-size:10px; color:var(--red-text); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">% increase</div>
+        <div style="font-size:18px; font-weight:700; color:var(--red-text);" id="bigPctDelta">—</div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>Why this matters:</strong> For new construction, the prior tax record typically reflects land-only value. Once the home is built and sold, the appraisal district reassesses to include the structure. Texas caps annual appraisal increases at 10% per year <em>once you have a homestead exemption</em> — but the first year after new construction is exempt from that cap, so the full jump hits at once.
+    </div>
+  </div>
+
+  <!-- HOMEOWNERS INSURANCE -->
+  <div class="card">
+    <div class="card-title">Homeowners Insurance</div>
+    <div class="field-row">
+      <div class="field-label">Annual premium scenario<small>Insurify, NerdWallet, MoneyGeek — Dallas, TX 2026</small></div>
+      <div class="field-input"><select id="insScenario" onchange="toggleCustomIns(); calc()">
+        <option value="2729">Min — $2,729/yr (Mercury, cheapest in Dallas)</option>
+        <option value="3989" selected>Median — $3,989/yr (Dallas avg, $300k dwelling)</option>
+        <option value="5890">High — $5,890/yr (NerdWallet Dallas avg)</option>
+        <option value="custom">Custom amount…</option>
+      </select></div>
+    </div>
+    <div class="field-row" id="customInsRow" style="display:none;">
+      <div class="field-label">Custom annual premium</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="customIns" value="4000" step="100" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row" style="font-weight:600;">
+      <div class="field-label">Monthly insurance escrow</div>
+      <div class="field-value" id="insMonthlyOut">$332</div>
+    </div>
+  </div>
+
+  <!-- FURNITURE & APPLIANCES -->
+  <div class="card">
+    <div class="card-title">Furniture &amp; Appliances — Finance into Mortgage or Pay Cash</div>
+    <p style="font-size:12px; color:var(--text2); margin-bottom:12px;">
+      ☑ <strong>Check</strong> = finance into mortgage (increases loan + UFMIP).
+      ☐ <strong>Uncheck</strong> = cash at move-in.
+      Choose <em>"$0 — not purchasing"</em> to skip an item entirely.
+      Use <strong>+ Add item</strong> for anything not listed.
+    </p>
+    <div id="furnList"></div>
+    <!-- Add custom item -->
+    <div class="add-row">
+      <input type="text" id="newItemName" placeholder="Item name…" style="font-size:13px; width:150px;">
+      <span class="prefix">$</span>
+      <input type="number" id="newItemPrice" placeholder="Price" style="font-size:13px; width:90px;" min="0" step="50">
+      <button class="btn-add" onclick="addCustomItem()">+ Add item</button>
+    </div>
+    <div class="field-row" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
+      <div class="field-label" style="font-weight:600;">Total financed into mortgage</div>
+      <div class="field-value" id="furnFinancedOut">$0</div>
+    </div>
+    <div class="field-row">
+      <div class="field-label" style="font-weight:600;">Total cash (move-in cost)</div>
+      <div class="field-value" id="furnCashOut">$0</div>
+    </div>
+  </div>
+
+  <!-- ELECTRICITY -->
+  <div class="card">
+    <div class="card-title">Electricity — ZIP 75210 (Oncor &middot; deregulated market)</div>
+    <p style="font-size:12px; color:var(--text2); margin-bottom:10px;">
+      Dallas has a deregulated market — you choose your provider. Rates from
+      <a href="https://www.choosetexaspower.org/compare-offers/?zipCode=75210&m=movey" target="_blank" style="color:var(--accent);">Choose Texas Power</a>
+      for ZIP 75210, May 2026. Click any row to use that rate.
+    </p>
+    <table class="rate-table">
+      <thead><tr><th>Provider / Plan</th><th>Term</th><th>¢/kWh</th></tr></thead>
+      <tbody id="rateTableBody"></tbody>
+    </table>
+    <div class="field-row" style="margin-top:12px;">
+      <div class="field-label">Selected rate<small>Click table row or enter custom</small></div>
+      <div class="field-input"><input type="number" id="elecRate" value="7.8" step="0.1" min="1" max="30" oninput="calc()"> <span class="prefix">¢/kWh</span></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Est. monthly usage (kWh)<small>~1,200 kWh typical &middot; 1,500–1,800+ summer peak</small></div>
+      <div class="field-input">
+        <div class="slider-wrap">
+          <input type="range" id="kwhSlider" min="700" max="2000" step="50" value="1200" oninput="syncKwh('slider')">
+          <span class="slider-val" id="kwhOut">1,200</span>
+        </div>
+        <input type="number" id="kwhInput" value="1200" step="50" min="100" max="3000" style="width:72px;" oninput="syncKwh('input')">
+      </div>
+    </div>
+    <div class="field-row" style="font-weight:600;">
+      <div class="field-label">Estimated monthly electricity bill</div>
+      <div class="field-value" id="elecBillOut">$94</div>
+    </div>
+    <p class="section-note">Rates at 1,000 kWh reference. Oncor TDU delivery (~5–6¢/kWh) typically bundled in. Some plans have bill credits at specific usage levels — read the EFL before signing up.</p>
+  </div>
+
+  <!-- WATER & SEWER -->
+  <div class="card">
+    <div class="card-title">Water, Sewer &amp; Trash — City of Dallas</div>
+    <div class="field-row">
+      <div class="field-label">Monthly water usage (gallons)<small>Typical 1-person household: 3,000–5,000 gal/mo</small></div>
+      <div class="field-input">
+        <div class="slider-wrap">
+          <input type="range" id="waterSlider" min="2000" max="10000" step="500" value="4000" oninput="syncWater('slider')">
+          <span class="slider-val" id="waterGalOut">4,000</span>
+        </div>
+        <input type="number" id="waterInput" value="4000" step="500" min="0" oninput="syncWater('input')">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Water base charge (meter fee)</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="waterBase" value="5.93" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Water rate (per 1,000 gal)<small>City of Dallas FY26 blended avg</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="waterRate" value="4.50" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Sewer base charge</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="sewerBase" value="5.34" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Sewer rate (per 1,000 gal)</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="sewerRate" value="5.00" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Stormwater / drainage fee</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="stormwater" value="8.50" step="0.50" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Trash / sanitation</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="trash" value="22.00" step="1" oninput="calc()"></div>
+    </div>
+    <div class="field-row" style="font-weight:600;">
+      <div class="field-label">Total water + sewer + trash</div>
+      <div class="field-value" id="waterTotalOut">$99</div>
+    </div>
+  </div>
+
+  <!-- OTHER MONTHLY -->
+  <div class="card">
+    <div class="card-title">Other Monthly Costs</div>
+    <div class="field-row">
+      <div class="field-label">Internet service<small>AT&amp;T Fiber / Spectrum / Optimum — enter your plan cost</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="internet" value="65" step="5" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Natural gas<small>Enter $0 if home is all-electric</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="gas" value="0" step="5" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">HOA fees<small>Enter $0 if no HOA</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="hoa" value="0" step="10" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Lawn / landscaping</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="lawn" value="60" step="10" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Home maintenance reserve<small>Recommended: 1% of home value ÷ 12 months</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="maintenance" value="279" step="25" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-label">Other / miscellaneous</div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="other" value="0" step="25" min="0" oninput="calc()"></div>
+    </div>
+  </div>
+
+</div><!-- /left-col -->
+
+<!-- RIGHT: SUMMARY PANEL -->
+<div class="summary-panel">
+
+  <div class="metric-grid">
+    <div class="metric-card"><div class="mlbl">Monthly mortgage (PITI+MIP)</div><div class="mval" id="cardPITI">—</div></div>
+    <div class="metric-card"><div class="mlbl">Total monthly (all-in)</div><div class="mval" id="cardTotal">—</div></div>
+    <div class="metric-card"><div class="mlbl">Down payment</div><div class="mval" id="cardDP">—</div></div>
+    <div class="metric-card"><div class="mlbl">Cash at closing</div><div class="mval" id="cardCash">—</div></div>
+    <div class="metric-card wide"><div class="mlbl">Total loan (incl. financed items + UFMIP)</div><div class="mval" id="cardLoan">—</div></div>
+  </div>
+
+  <div class="summary-card">
+    <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.4); border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:8px; margin-bottom:4px;">Monthly Payment Breakdown</div>
+    <div class="sum-hdr">Mortgage</div>
+    <div class="sum-row"><span class="lbl">Principal &amp; interest</span><span class="amt" id="sumPI">—</span></div>
+    <div class="sum-row"><span class="lbl">FHA MIP (monthly)</span><span class="amt" id="sumMIP">—</span></div>
+    <div class="sum-row"><span class="lbl">Property tax escrow</span><span class="amt" id="sumTax">—</span></div>
+    <div class="sum-row"><span class="lbl">Homeowners insurance escrow</span><span class="amt" id="sumIns">—</span></div>
+    <div class="sum-row subtotal"><span class="lbl">Total PITI + MIP</span><span class="amt" id="sumPITI">—</span></div>
+    <div class="sum-hdr">Utilities</div>
+    <div class="sum-row"><span class="lbl">Electricity</span><span class="amt" id="sumElec">—</span></div>
+    <div class="sum-row"><span class="lbl">Water + sewer + trash</span><span class="amt" id="sumWater">—</span></div>
+    <div class="sum-row"><span class="lbl">Internet</span><span class="amt" id="sumInternet">—</span></div>
+    <div class="sum-row"><span class="lbl">Natural gas</span><span class="amt" id="sumGas">—</span></div>
+    <div class="sum-hdr">Other</div>
+    <div class="sum-row"><span class="lbl">HOA fees</span><span class="amt" id="sumHOA">—</span></div>
+    <div class="sum-row"><span class="lbl">Lawn / landscaping</span><span class="amt" id="sumLawn">—</span></div>
+    <div class="sum-row"><span class="lbl">Maintenance reserve</span><span class="amt" id="sumMaint">—</span></div>
+    <div class="sum-row"><span class="lbl">Other / misc</span><span class="amt" id="sumOther">—</span></div>
+    <div class="sum-row grand"><span class="lbl">Total estimated monthly</span><span class="amt" id="sumGrand">—</span></div>
+  </div>
+
+  <!-- UPFRONT COSTS -->
+  <div class="card">
+    <div class="card-title">Upfront / Move-In Costs</div>
+    <div class="field-row"><div class="field-label">Down payment</div><div class="field-value" id="uiDP">—</div></div>
+    <div class="field-row"><div class="field-label">Cash furniture &amp; appliances</div><div class="field-value" id="uiFurnCash">—</div></div>
+    <div class="field-row">
+      <div class="field-label">Est. closing costs<small>Typically 2–5% of loan. FHA allows seller concessions.</small></div>
+      <div class="field-input"><span class="prefix">$</span><input type="number" id="closingCosts" value="9000" step="500" min="0" oninput="calc()"></div>
+    </div>
+    <div class="field-row" style="font-weight:600;"><div class="field-label">Total estimated cash to close</div><div class="field-value" id="uiTotal">—</div></div>
+    <div class="info-box" style="margin-top:8px;"><strong>Note:</strong> Upfront MIP is financed into the loan — not paid at closing. Closing costs cover origination, appraisal, title insurance, prepaid interest, and escrow setup.</div>
+  </div>
+
+  <div class="info-box">
+    <strong>Homestead Exemption reminder:</strong> Filing after closing saves approximately
+    <span class="highlight" id="homesteadSavings">$83/mo</span> via the $100k Dallas ISD exemption.
+    Annual savings: <span class="highlight" id="homesteadAnnual">$996/yr</span>.
+  </div>
+
+  <div style="margin-top:10px;">
+    <a class="link-btn" href="https://www.choosetexaspower.org/compare-offers/?zipCode=75210&m=movey" target="_blank">⚡ Compare electricity plans for 75210 →</a>
+    <a class="link-btn" href="https://dallascityhall.com/departments/waterutilities/Pages/dallas-water-calculator.aspx" target="_blank" style="margin-top:6px; display:inline-block;">💧 City of Dallas water calculator →</a>
+    <a class="link-btn" href="https://www.compass.com/homedetails/4020-Hamilton-Ave-Dallas-TX-75210/19CLA9_pid/" target="_blank" style="margin-top:6px; display:inline-block;">🏠 View 4020 Hamilton listing →</a>
+  </div>
+</div><!-- /summary-panel -->
+</div><!-- /layout -->
+
+<script>
+// ── Electricity plans ──
+const elecPlans = [
+  { name: 'APG&E - SimpleSaver 12',             term: '12 mo', rate: 7.6 },
+  { name: 'Express Energy - Flash Value 12',    term: '12 mo', rate: 7.8 },
+  { name: 'Frontier Utilities - Saver Plus 12', term: '12 mo', rate: 7.8 },
+  { name: 'Discount Power - Bill Credit 12',    term: '12 mo', rate: 7.8 },
+  { name: 'Gexa Energy - Eco Saver Plus 12',    term: '12 mo', rate: 7.8 },
+  { name: '4Change Energy - Maxx Saver 12',     term: '12 mo', rate: 7.8 },
+  { name: 'Cirro - Bill Bonus 12',              term: '12 mo', rate: 7.8 },
+  { name: 'Octopus Energy - Octopus Lite 12',   term: '12 mo', rate: 8.7 },
+  { name: 'Rhythm Energy - Rhythm Saver 14',    term: '14 mo', rate: 8.8 },
+  { name: 'Atlantex Power - Radiance 12',       term: '12 mo', rate: 11.5 },
+  { name: 'Reliant - Power Savings 12',         term: '12 mo', rate: 11.9 },
+  { name: 'Veteran Energy - Valor 12',          term: '12 mo', rate: 13.4 },
+  { name: 'Constellation - 12 Mo Bill Credit',  term: '12 mo', rate: 13.5 },
+  { name: 'TXU Energy - Smart Edge 12',         term: '12 mo', rate: 13.5 },
+  { name: 'TriEagle Energy - Real Deal 24',     term: '24 mo', rate: 14.5 },
+];
+let selectedPlanIdx = 1;
+
+function buildRateTable() {
+  const tbody = document.getElementById('rateTableBody');
+  elecPlans.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    if (i === selectedPlanIdx) tr.className = 'selected';
+    tr.innerHTML = `<td>${p.name}</td><td>${p.term}</td><td>${p.rate}¢</td>`;
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => {
+      selectedPlanIdx = i;
+      document.getElementById('elecRate').value = p.rate;
+      document.querySelectorAll('#rateTableBody tr').forEach((r,j) => r.className = j===i?'selected':'');
+      calc();
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Preset furniture items ──
+const presetItems = [
+  { id:'fridge',    label:'Refrigerator',             note:'New',                         min:700,  med:1200, max:2500 },
+  { id:'wd',        label:'Washer &amp; dryer set',   note:'Used set',                    min:400,  med:650,  max:1000 },
+  { id:'bedroom',   label:'Bedroom set',              note:'Frame, headboard, dresser',   min:800,  med:1500, max:3500 },
+  { id:'dining',    label:'Dining/breakfast table',   note:'Table + chairs',              min:400,  med:900,  max:2000 },
+  { id:'barstools', label:'3 bar stools',             note:'Counter / island seating',   min:150,  med:350,  max:800  },
+  { id:'armchair',  label:'Arm chair',                note:'Living room accent chair',    min:200,  med:450,  max:1200 },
+];
+
+// State for preset items
+const furnState = {};
+// Custom items: [{id, financed, cost}]
+let customItems = [];
+let customCounter = 0;
+
+function makeBadge(id, financed, isSkip) {
+  if (isSkip) return `<span class="furn-badge badge-skip" id="badge_${id}">skip</span>`;
+  return `<span class="furn-badge ${financed?'badge-financed':'badge-cash'}" id="badge_${id}">${financed?'financed':'cash'}</span>`;
+}
+
+function buildPresetFurniture() {
+  const list = document.getElementById('furnList');
+  presetItems.forEach(item => {
+    furnState[item.id] = { financed: false, scenario: 'zero' };
+
+    const div = document.createElement('div');
+    div.className = 'furn-item';
+    div.id = 'row_' + item.id;
+
+    // Build the select options: $0 first, then min/med/max
+    const sel = document.createElement('select');
+    sel.className = 'furn-sel';
+    sel.id = 'sel_' + item.id;
+    sel.innerHTML = `
+      <option value="zero" selected>$0 — not purchasing</option>
+      <option value="min">Min: $${item.min.toLocaleString()}</option>
+      <option value="med">Mid: $${item.med.toLocaleString()}</option>
+      <option value="max">Max: $${item.max.toLocaleString()}</option>
+    `;
+
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'furn-check';
+    chk.id = 'chk_' + item.id;
+    chk.disabled = true; // disabled until scenario is selected
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'furn-name';
+    nameDiv.innerHTML = `${item.label}<small>${item.note}</small>`;
+
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'furn-badge badge-skip';
+    badgeSpan.id = 'badge_' + item.id;
+    badgeSpan.textContent = 'skip';
+
+    div.appendChild(chk);
+    div.appendChild(nameDiv);
+    div.appendChild(badgeSpan);
+    div.appendChild(sel);
+    list.appendChild(div);
+
+    sel.addEventListener('change', () => {
+      const scenario = sel.value;
+      furnState[item.id].scenario = scenario;
+      const isSkip = scenario === 'zero';
+      chk.disabled = isSkip;
+      if (isSkip) { chk.checked = false; furnState[item.id].financed = false; }
+      const b = document.getElementById('badge_'+item.id);
+      b.className = 'furn-badge ' + (isSkip ? 'badge-skip' : (furnState[item.id].financed ? 'badge-financed' : 'badge-cash'));
+      b.textContent = isSkip ? 'skip' : (furnState[item.id].financed ? 'financed' : 'cash');
+      calc();
+    });
+
+    chk.addEventListener('change', () => {
+      furnState[item.id].financed = chk.checked;
+      const b = document.getElementById('badge_'+item.id);
+      b.className = 'furn-badge ' + (chk.checked ? 'badge-financed' : 'badge-cash');
+      b.textContent = chk.checked ? 'financed' : 'cash';
+      calc();
+    });
+  });
+}
+
+function addCustomItem() {
+  const nameEl = document.getElementById('newItemName');
+  const priceEl = document.getElementById('newItemPrice');
+  const name = nameEl.value.trim() || 'Custom item';
+  const price = parseFloat(priceEl.value) || 0;
+
+  customCounter++;
+  const cid = 'c' + customCounter;
+  customItems.push({ id: cid, financed: false, cost: price });
+
+  const list = document.getElementById('furnList');
+  const div = document.createElement('div');
+  div.className = 'custom-item';
+  div.id = 'row_' + cid;
+
+  div.innerHTML = `
+    <input type="checkbox" class="furn-check" id="chk_${cid}">
+    <input type="text" id="name_${cid}" value="${name.replace(/</g,'&lt;').replace(/>/g,'&gt;')}" style="font-size:12px; width:130px; min-width:0;">
+    <span class="furn-badge badge-cash" id="badge_${cid}">cash</span>
+    <span class="prefix">$</span>
+    <input type="number" id="price_${cid}" value="${price}" min="0" step="50" style="width:90px; font-size:12px; text-align:right;">
+    <button class="btn-remove" title="Remove item">✕</button>
+  `;
+  list.appendChild(div);
+
+  div.querySelector('#chk_'+cid).addEventListener('change', function() {
+    const ci = customItems.find(c => c.id === cid);
+    if (ci) ci.financed = this.checked;
+    const b = document.getElementById('badge_'+cid);
+    b.className = 'furn-badge ' + (this.checked ? 'badge-financed' : 'badge-cash');
+    b.textContent = this.checked ? 'financed' : 'cash';
+    calc();
+  });
+
+  div.querySelector('#price_'+cid).addEventListener('input', function() {
+    const ci = customItems.find(c => c.id === cid);
+    if (ci) ci.cost = parseFloat(this.value) || 0;
+    calc();
+  });
+
+  div.querySelector('.btn-remove').addEventListener('click', () => {
+    customItems = customItems.filter(c => c.id !== cid);
+    div.remove();
+    calc();
+  });
+
+  nameEl.value = '';
+  priceEl.value = '';
+  nameEl.focus();
+  calc();
+}
+
+function getPresetCost(item) {
+  const s = furnState[item.id];
+  if (s.scenario === 'zero') return 0;
+  return item[s.scenario];
+}
+
+// ── Helpers ──
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function pmt(r, n, pv) {
+  if (r === 0) return pv / n;
+  const mr = r / 12;
+  return pv * mr * Math.pow(1+mr, n) / (Math.pow(1+mr, n) - 1);
+}
+function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+function syncDP(src) {
+  const sl = document.getElementById('dpSlider'), inp = document.getElementById('dpPctInput');
+  if (src === 'slider') inp.value = sl.value; else sl.value = inp.value;
+  calc();
+}
+function syncKwh(src) {
+  const sl = document.getElementById('kwhSlider'), inp = document.getElementById('kwhInput');
+  if (src === 'slider') inp.value = sl.value; else sl.value = inp.value;
+  calc();
+}
+function syncWater(src) {
+  const sl = document.getElementById('waterSlider'), inp = document.getElementById('waterInput');
+  if (src === 'slider') inp.value = sl.value; else sl.value = inp.value;
+  calc();
+}
+function toggleCustomRate() {
+  document.getElementById('customRateRow').style.display =
+    document.getElementById('rateScenario').value === 'custom' ? 'flex' : 'none';
+}
+function toggleCustomIns() {
+  document.getElementById('customInsRow').style.display =
+    document.getElementById('insScenario').value === 'custom' ? 'flex' : 'none';
+}
+
+function calc() {
+  const price = v('price');
+  const dpPct = parseFloat(document.getElementById('dpSlider').value) / 100;
+  const dp = price * dpPct;
+  const baseLoan = price - dp;
+  document.getElementById('dpPctOut').textContent = (dpPct*100).toFixed(1) + '%';
+  set('dpDollar', fmt(dp));
+  set('baseLoanOut', fmt(baseLoan));
+
+  // Furniture
+  let furnFinanced = 0, furnCash = 0;
+  presetItems.forEach(item => {
+    const cost = getPresetCost(item);
+    if (cost === 0) return;
+    if (furnState[item.id].financed) furnFinanced += cost; else furnCash += cost;
+  });
+  customItems.forEach(ci => {
+    if (!ci.cost) return;
+    if (ci.financed) furnFinanced += ci.cost; else furnCash += ci.cost;
+  });
+  set('furnFinancedOut', fmt(furnFinanced));
+  set('furnCashOut', fmt(furnCash));
+
+  // Loan + MIP
+  const ufmipRate = v('ufmipRate') / 100;
+  const loanBeforeMIP = baseLoan + furnFinanced;
+  const ufmip = loanBeforeMIP * ufmipRate;
+  const totalLoan = loanBeforeMIP + ufmip;
+  set('ufmipOut', fmt(ufmip));
+
+  const rs = document.getElementById('rateScenario').value;
+  const rate = (rs === 'custom' ? v('customRate') : parseFloat(rs)) / 100;
+  const nper = v('term') * 12;
+  const pi = pmt(rate, nper, totalLoan);
+
+  const monthlyMIP = (loanBeforeMIP * v('annualMIPRate') / 100) / 12;
+  set('monthlyMIPOut', fmt(monthlyMIP) + '/mo');
+
+  // Taxes
+  const tv = v('taxableVal');
+  const tCity    = tv * v('rCity')    / 100;
+  const tISD     = tv * v('rISD')     / 100;
+  const tCounty  = tv * v('rCounty')  / 100;
+  const tCollege = tv * v('rCollege') / 100;
+  const tHosp    = tv * v('rHospital')/ 100;
+  const taxTotal = tCity + tISD + tCounty + tCollege + tHosp;
+  const taxMo = taxTotal / 12;
+  set('tCity',fmt(tCity)); set('tISD',fmt(tISD)); set('tCounty',fmt(tCounty));
+  set('tCollege',fmt(tCollege)); set('tHospital',fmt(tHosp));
+  set('taxTotalOut',fmt(taxTotal)); set('taxMonthlyOut',fmt(taxMo));
+
+  const homesteadMo = (100000 * v('rISD') / 100) / 12;
+  set('homesteadSavings', fmt(homesteadMo) + '/mo');
+  set('homesteadAnnual', fmt(homesteadMo*12) + '/yr');
+
+  // Previous-period tax comparison
+  const prevTV = v('prevTaxableVal');
+  const pCity    = prevTV * v('rCity')    / 100;
+  const pISD     = prevTV * v('rISD')     / 100;
+  const pCounty  = prevTV * v('rCounty')  / 100;
+  const pCollege = prevTV * v('rCollege') / 100;
+  const pHosp    = prevTV * v('rHospital')/ 100;
+  const pAnnual  = pCity + pISD + pCounty + pCollege + pHosp;
+  const pMonthly = pAnnual / 12;
+
+  set('pCity', fmt(pCity)); set('pISD', fmt(pISD)); set('pCounty', fmt(pCounty));
+  set('pCollege', fmt(pCollege)); set('pHosp', fmt(pHosp));
+  set('pAnnual', fmt(pAnnual)); set('pMonthly', fmt(pMonthly));
+
+  set('cCity', fmt(tCity)); set('cISD', fmt(tISD)); set('cCounty', fmt(tCounty));
+  set('cCollege', fmt(tCollege)); set('cHosp', fmt(tHosp));
+  set('cAnnual', fmt(taxTotal)); set('cMonthly', fmt(taxMo));
+
+  const fmtDelta = (n) => (n >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(n)).toLocaleString();
+  set('dCity', fmtDelta(tCity - pCity));
+  set('dISD', fmtDelta(tISD - pISD));
+  set('dCounty', fmtDelta(tCounty - pCounty));
+  set('dCollege', fmtDelta(tCollege - pCollege));
+  set('dHosp', fmtDelta(tHosp - pHosp));
+  set('dAnnual', fmtDelta(taxTotal - pAnnual));
+  set('dMonthly', fmtDelta(taxMo - pMonthly));
+
+  set('bigAnnualDelta', fmtDelta(taxTotal - pAnnual) + '/yr');
+  set('bigMonthlyDelta', fmtDelta(taxMo - pMonthly) + '/mo');
+  const pctChange = pAnnual > 0 ? ((taxTotal - pAnnual) / pAnnual) * 100 : 0;
+  set('bigPctDelta', (pctChange >= 0 ? '+' : '') + pctChange.toFixed(0) + '%');
+
+  // Insurance
+  const is = document.getElementById('insScenario').value;
+  const annualIns = is === 'custom' ? v('customIns') : parseFloat(is);
+  const insMo = annualIns / 12;
+  set('insMonthlyOut', fmt(insMo));
+
+  const pitiMIP = pi + monthlyMIP + taxMo + insMo;
+
+  // Electricity
+  const elecBill = (v('kwhInput') * v('elecRate')) / 100;
+  document.getElementById('kwhOut').textContent = Math.round(v('kwhInput')).toLocaleString();
+  set('elecBillOut', fmt(elecBill));
+
+  // Water
+  const galK = v('waterInput') / 1000;
+  document.getElementById('waterGalOut').textContent = Math.round(v('waterInput')).toLocaleString();
+  const waterTotal = v('waterBase') + galK * v('waterRate')
+                   + v('sewerBase') + galK * v('sewerRate')
+                   + v('stormwater') + v('trash');
+  set('waterTotalOut', fmt(waterTotal));
+
+  const internet=v('internet'), gas=v('gas'), hoa=v('hoa');
+  const lawn=v('lawn'), maint=v('maintenance'), other=v('other');
+  const grand = pitiMIP + elecBill + waterTotal + internet + gas + hoa + lawn + maint + other;
+
+  set('sumPI',fmt(pi)); set('sumMIP',fmt(monthlyMIP));
+  set('sumTax',fmt(taxMo)); set('sumIns',fmt(insMo));
+  set('sumPITI',fmt(pitiMIP));
+  set('sumElec',fmt(elecBill)); set('sumWater',fmt(waterTotal));
+  set('sumInternet',fmt(internet)); set('sumGas',fmt(gas));
+  set('sumHOA',fmt(hoa)); set('sumLawn',fmt(lawn));
+  set('sumMaint',fmt(maint)); set('sumOther',fmt(other));
+  set('sumGrand',fmt(grand));
+
+  set('cardPITI',fmt(pitiMIP)); set('cardTotal',fmt(grand));
+  set('cardDP',fmt(dp)); set('cardLoan',fmt(totalLoan));
+
+  const cashToClose = dp + furnCash + v('closingCosts');
+  set('uiDP',fmt(dp)); set('uiFurnCash',fmt(furnCash));
+  set('uiTotal',fmt(cashToClose)); set('cardCash',fmt(cashToClose));
+}
+
+// Enter key support for add-item inputs
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('newItemName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('newItemPrice').focus();
+  });
+  document.getElementById('newItemPrice').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCustomItem();
+  });
+});
+
+buildRateTable();
+buildPresetFurniture();
+calc();
+</script>
+</body>
+</html>
