@@ -60,7 +60,7 @@ async function handleImage(request) {
   let parsed;
   try { parsed = new URL(imgUrl); } catch { return new Response('Invalid url', { status: 400 }); }
 
-  const allowed = ['compass.com', 'ssl.cdn-redfin.com', 'photos.zillowstatic.com', 'ar.rdcpix.com', 'p.rdcpix.com', 'rdcpix.com'];
+  const allowed = ['compass.com', 'ssl.cdn-redfin.com'];
   if (!allowed.some(h => parsed.hostname.endsWith(h))) {
     return new Response('Domain not allowed', { status: 403 });
   }
@@ -102,7 +102,7 @@ function parseListing(html, url) {
     lotSize: null, propertyType: null,
   };
 
-  // ── 1. __NEXT_DATA__ (Compass, Zillow, Realtor.com, Redfin) ──────────────
+  // ── 1. __NEXT_DATA__ (Compass, Redfin) ───────────────────────────────────
   const nextMatch = html.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
   if (nextMatch) {
     try {
@@ -129,43 +129,6 @@ function parseListing(html, url) {
         }
       }
 
-      if (hostname.includes('zillow')) {
-        // Zillow embeds property data in gdpClientCache as a stringified JSON map
-        let bld = pp?.initialData?.building;
-        if (!bld && pp?.gdpClientCache) {
-          try {
-            const cache = JSON.parse(pp.gdpClientCache);
-            const first = JSON.parse(Object.values(cache)[0]);
-            bld = first?.property ?? first?.building;
-          } catch {}
-        }
-        if (bld) {
-          result.price      = bld.price ?? bld.listingPrice ?? bld.zestimate;
-          result.address    = bld.streetAddress ?? bld.address?.streetAddress;
-          result.beds       = bld.bedrooms ?? bld.beds;
-          result.baths      = bld.bathrooms ?? bld.baths;
-          result.sqft       = bld.livingArea ?? bld.floorSize;
-          result.yearBuilt  = bld.yearBuilt;
-          result.photo      = toPhotoUrl(bld.photos?.[0]) ?? toPhotoUrl(bld.images?.[0]);
-          result.lotSize    = bld.lotSize;
-          result.propertyType = bld.homeType ?? bld.propertyType;
-        }
-      }
-
-      if (hostname.includes('realtor.com')) {
-        const home = pp?.initialProps?.listing ?? pp?.homes?.[0] ?? pp?.property;
-        if (home) {
-          result.price      = home.list_price ?? home.price;
-          result.address    = home.location?.address?.line;
-          result.beds       = home.description?.beds ?? home.description?.beds_min;
-          result.baths      = home.description?.baths_consolidated ?? home.description?.baths;
-          result.sqft       = home.description?.sqft;
-          result.yearBuilt  = home.description?.year_built;
-          result.photo      = home.primary_photo?.href ?? home.photos?.[0]?.href;
-          result.description = home.description?.text;
-          result.propertyType = home.description?.type;
-        }
-      }
 
       if (hostname.includes('redfin')) {
         // Redfin puts data in initialInfo or serverSideData

@@ -140,7 +140,7 @@
   <div class="card">
     <div class="card-title">Property Lookup <span style="font-weight:400; color:var(--text3); text-transform:none; letter-spacing:0;">&mdash; address or listing URL</span></div>
     <p style="font-size:12px; color:var(--text2); margin-bottom:10px;">
-      Enter a <strong>Dallas address</strong> to pull tax data from DCAD, or <strong>paste a listing URL</strong> from Compass, Zillow, Redfin, or Realtor.com to auto-fill the price and look up tax records automatically.
+      Enter a <strong>Dallas address</strong> to pull tax data from DCAD, or <strong>paste a listing URL</strong> from Compass or Redfin to auto-fill the price and look up tax records automatically.
     </p>
     <div class="field-row">
       <div class="field-input" style="flex:1; gap:8px;">
@@ -1113,13 +1113,11 @@ async function searchByAddress(address) {
   // Real estate sites block server-side fetches (bot detection). For address searches,
   // DCAD gives tax data automatically. Listing price/photo requires pasting a URL.
   const slug = address.trim().replace(/\s+/g, '-');
-  const compassUrl  = `https://www.compass.com/homes-for-sale/?q=${encodeURIComponent(address + ' Dallas TX')}`;
-  const zillowUrl   = `https://www.zillow.com/homes/${slug}-Dallas-TX_rb/`;
-  const redfinUrl   = `https://www.redfin.com/TX/Dallas/${slug}/home/`;
+  const compassUrl = `https://www.compass.com/homes-for-sale/?q=${encodeURIComponent(address + ' Dallas TX')}`;
+  const redfinUrl  = `https://www.redfin.com/TX/Dallas/${slug}/home/`;
 
   const prefixHtml = `<div style="margin-bottom:6px; font-size:12px;">
     Find listing: <a href="${compassUrl}" target="_blank" style="color:var(--accent);">Compass</a> &middot;
-    <a href="${zillowUrl}" target="_blank" style="color:var(--accent);">Zillow</a> &middot;
     <a href="${redfinUrl}" target="_blank" style="color:var(--accent);">Redfin</a>
     <span style="color:var(--text3);"> — paste the listing URL above to auto-fill price &amp; photo</span>
   </div>`;
@@ -1190,9 +1188,7 @@ function extractAddressFromURL(url) {
     const { hostname, pathname } = new URL(url);
     let slug = null;
     if (hostname.includes('compass.com'))   slug = pathname.match(/\/listing\/([^/]+)\//)?.[1] ?? pathname.match(/\/homedetails\/([^/]+)\//)?.[1];
-    if (hostname.includes('zillow.com'))    slug = pathname.match(/\/homedetails\/([^_/]+)/)?.[1];
     if (hostname.includes('redfin.com'))    slug = pathname.match(/\/[A-Z]{2}\/[^/]+\/([^/]+)\/home/)?.[1];
-    if (hostname.includes('realtor.com'))   slug = pathname.match(/\/realestateandhomes-detail\/([^_/]+(?:_[^_/]+){0,2})/)?.[1]?.replace(/_/g,'-');
     if (slug) return slug.replace(/-/g,' ');
   } catch {}
   return null;
