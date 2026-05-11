@@ -34,6 +34,10 @@ async function handleListing(request) {
         'Accept-Language': 'en-US,en;q=0.9',
         'Cache-Control': 'no-cache',
         'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-User': '?1',
       },
       redirect: 'follow',
     });

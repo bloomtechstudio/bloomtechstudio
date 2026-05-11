@@ -1054,8 +1054,11 @@ async function searchByURL(url) {
     showPropCard(data, url);
 
   } catch(e) {
-    priceHtml = `<span style="color:var(--red-text);">Listing fetch error: ${e.message}</span><br>`;
-    // still try address from URL slug
+    const is403 = e.message.includes('403');
+    const siteName = (() => { try { return new URL(url).hostname.replace('www.',''); } catch { return 'listing site'; } })();
+    priceHtml = is403
+      ? `<span style="color:var(--amber-text);">${siteName} blocks automated access — <a href="${url}" target="_blank" style="color:var(--accent);">view listing →</a></span><br>`
+      : `<span style="color:var(--red-text);">Could not fetch listing: ${e.message}</span><br>`;
   }
 
   if (listingAddress) {
