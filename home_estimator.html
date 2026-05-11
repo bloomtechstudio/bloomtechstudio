@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Home Purchase Estimator</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DMYTMVJMH2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-DMYTMVJMH2');
+</script>
 <style>
   :root {
     --bg: #f5f4f0; --surface: #ffffff; --surface2: #f8f7f3;
@@ -112,17 +119,19 @@
 <div class="layout">
 <div class="left-col">
 
-  <!-- DCAD ADDRESS LOOKUP -->
+  <!-- PROPERTY LOOKUP -->
   <div class="card">
-    <div class="card-title">DCAD Property Lookup <span style="font-weight:400; color:var(--text3); text-transform:none; letter-spacing:0;">&mdash; auto-fill from address</span></div>
+    <div class="card-title">Property Lookup <span style="font-weight:400; color:var(--text3); text-transform:none; letter-spacing:0;">&mdash; address or listing URL</span></div>
+    <p style="font-size:12px; color:var(--text2); margin-bottom:10px;">
+      Enter a <strong>Dallas address</strong> to pull tax data from DCAD, or <strong>paste a listing URL</strong> from Compass, Zillow, Redfin, or Realtor.com to auto-fill the price and look up tax records automatically.
+    </p>
     <div class="field-row">
-      <div class="field-label">Property address<small>Dallas address — pulls appraised value from DCAD</small></div>
       <div class="field-input" style="flex:1; gap:8px;">
-        <input type="text" id="dcadAddress" placeholder="e.g. 4020 Hamilton Ave" style="flex:1; width:auto; min-width:180px;" onkeydown="if(event.key==='Enter')lookupDCAD()">
-        <button class="btn-add" onclick="lookupDCAD()" id="dcadBtn">Look up</button>
+        <input type="text" id="propertySearch" placeholder="4020 Hamilton Ave  —or—  https://www.compass.com/…" style="flex:1; width:auto; min-width:200px; font-size:13px;" onkeydown="if(event.key==='Enter')performSearch()">
+        <button class="btn-add" onclick="performSearch()" id="searchBtn" style="white-space:nowrap;">Search</button>
       </div>
     </div>
-    <div id="dcadStatus" style="font-size:12px; margin-top:8px; display:none;"></div>
+    <div id="searchStatus" style="font-size:12px; margin-top:10px; line-height:1.7; display:none;"></div>
   </div>
 
   <!-- PURCHASE & LOAN -->
@@ -876,17 +885,73 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-async function lookupDCAD() {
-  const addr = document.getElementById('dcadAddress').value.trim().toUpperCase();
-  if (!addr) return;
-  const status = document.getElementById('dcadStatus');
-  const btn = document.getElementById('dcadBtn');
+
+function performSearch() {
+  const val = document.getElementById('propertySearch').value.trim();
+  if (!val) return;
+  if (/^https?:\/\//i.test(val)) {
+    searchByURL(val);
+  } else {
+    searchByAddress(val);
+  }
+}
+
+async function searchByURL(url) {
+  const status = document.getElementById('searchStatus');
+  const btn = document.getElementById('searchBtn');
   status.style.display = 'block';
   status.style.color = 'var(--text2)';
-  status.textContent = 'Looking up…';
+  status.textContent = 'Fetching listing page…';
   btn.disabled = true;
 
-  const where = encodeURIComponent(`UPPER(SITEADDRESS) LIKE '%${addr}%'`);
+  let listingAddress = extractAddressFromURL(url);
+  let priceHtml = '';
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const html = await res.text();
+    const parsed = parseListingHTML(html, url);
+    if (parsed.price) {
+      document.getElementById('price').value = parsed.price;
+      document.getElementById('taxableVal').value = parsed.price;
+      calc();
+      priceHtml = `List price: <strong>$${Number(parsed.price).toLocaleString()}</strong> — auto-filled above.<br>`;
+      gtag('event', 'listing_price_parsed', { source: new URL(url).hostname, price: parsed.price });
+    }
+    if (parsed.address && !listingAddress) listingAddress = parsed.address;
+  } catch(e) {
+    const blocked = e.message.toLowerCase().includes('failed to fetch') || e.message.toLowerCase().includes('networkerror');
+    priceHtml = blocked
+      ? `<span style="color:var(--amber-text);">⚠ Listing page blocked by CORS — price not auto-filled. A Cloudflare Worker proxy would fix this.</span><br>`
+      : `<span style="color:var(--red-text);">Fetch error: ${e.message}</span><br>`;
+  }
+
+  if (listingAddress) {
+    status.innerHTML = priceHtml + `Looking up tax records for <em>${listingAddress}</em>…`;
+    await runDCADLookup(listingAddress, status, priceHtml);
+  } else {
+    status.style.color = 'var(--amber)';
+    status.innerHTML = priceHtml + `Couldn't extract an address from the URL to look up tax records. Try searching the address directly.`;
+  }
+  btn.disabled = false;
+}
+
+async function searchByAddress(address) {
+  const status = document.getElementById('searchStatus');
+  const btn = document.getElementById('searchBtn');
+  status.style.display = 'block';
+  status.style.color = 'var(--text2)';
+  status.textContent = 'Looking up tax records…';
+  btn.disabled = true;
+  const compassQ = encodeURIComponent(address + ' Dallas TX');
+  await runDCADLookup(address, status, `<a href="https://www.compass.com/homes-for-sale/?q=${compassQ}" target="_blank" style="color:var(--accent);">Search this address on Compass →</a><br>`);
+  btn.disabled = false;
+}
+
+async function runDCADLookup(address, status, prefixHtml = '') {
+  const clean = address.toUpperCase().replace(/\b(DALLAS|TX|TEXAS|\d{5})\b/g,'').replace(/\s+/g,' ').trim();
+  const where = encodeURIComponent(`UPPER(SITEADDRESS) LIKE '%${clean}%'`);
   const fields = 'PARCELID,SITEADDRESS,OWNERNME1,IMPVALUE,LNDVALUE,CNTASSDVAL,PRVASSDVAL';
   const url = `https://maps.dcad.org/prdwa/rest/services/Property/ParcelQuery/MapServer/4/query?where=${where}&outFields=${fields}&returnGeometry=false&f=json`;
 
@@ -895,35 +960,87 @@ async function lookupDCAD() {
     const data = await res.json();
     if (data.error) {
       status.style.color = 'var(--red)';
-      status.textContent = `DCAD error: ${data.error.message}`;
-    } else if (!data.features || data.features.length === 0) {
-      status.style.color = 'var(--amber)';
-      status.textContent = 'No matching parcels found. Try a shorter address fragment.';
-    } else {
-      const f = data.features[0].attributes;
-      // Auto-fill fields
-      document.getElementById('price').value = f.CNTASSDVAL || '';
-      document.getElementById('taxableVal').value = f.CNTASSDVAL || '';
-      if (f.LNDVALUE) document.getElementById('prevTaxableVal').value = f.LNDVALUE;
-      calc();
-      status.style.color = 'var(--green)';
-      status.innerHTML = `<strong>${f.SITEADDRESS}</strong> &mdash; Owner: ${f.OWNERNME1}<br>
-        Appraised: $${(f.CNTASSDVAL||0).toLocaleString()} &nbsp;|&nbsp;
-        Land only: $${(f.LNDVALUE||0).toLocaleString()} &nbsp;|&nbsp;
-        Improvement: $${(f.IMPVALUE||0).toLocaleString()} &nbsp;|&nbsp;
-        Prev. value: $${(f.PRVASSDVAL||0).toLocaleString()}<br>
-        <span style="color:var(--text3);">Account: ${f.PARCELID} &mdash; Purchase price &amp; taxable value auto-filled above.</span>`;
-      if (data.features.length > 1) {
-        status.innerHTML += `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — showing first result. Try a more specific address.</span>`;
-      }
+      status.innerHTML = prefixHtml + `DCAD error: ${data.error.message}`;
+      return;
     }
-  } catch (e) {
+    if (!data.features?.length) {
+      status.style.color = 'var(--amber)';
+      status.innerHTML = prefixHtml + `No DCAD parcel found for "<em>${clean}</em>". Try a shorter address fragment.`;
+      return;
+    }
+    const f = data.features[0].attributes;
+    document.getElementById('taxableVal').value = f.CNTASSDVAL || document.getElementById('taxableVal').value;
+    if (f.LNDVALUE) document.getElementById('prevTaxableVal').value = f.LNDVALUE;
+    calc();
+    const dcadLink = `https://www.dallascad.org/AcctDetail.aspx?ID=${f.PARCELID}`;
+    status.style.color = 'var(--green)';
+    status.innerHTML = prefixHtml +
+      `<strong>${f.SITEADDRESS}</strong> — ${f.OWNERNME1}<br>
+      Appraised: <strong>$${(f.CNTASSDVAL||0).toLocaleString()}</strong> &nbsp;|&nbsp;
+      Land: $${(f.LNDVALUE||0).toLocaleString()} &nbsp;|&nbsp;
+      Improvement: $${(f.IMPVALUE||0).toLocaleString()} &nbsp;|&nbsp;
+      Prev: $${(f.PRVASSDVAL||0).toLocaleString()}<br>
+      <span style="color:var(--text3);">Account: <a href="${dcadLink}" target="_blank" style="color:var(--accent);">${f.PARCELID} — View DCAD detail →</a></span>`
+      + (data.features.length > 1 ? `<br><span style="color:var(--amber-text);">⚠ ${data.features.length} parcels matched — showing first result.</span>` : '');
+    gtag('event', 'dcad_lookup', { address: f.SITEADDRESS });
+  } catch(e) {
     status.style.color = 'var(--red)';
-    status.innerHTML = `<strong>CORS blocked</strong> — browser prevented the request to maps.dcad.org.<br>
-      We'll need a Cloudflare Worker proxy to make this work.<br>
-      <span style="color:var(--text3); font-size:11px;">${e.message}</span>`;
+    status.innerHTML = prefixHtml + `<strong>DCAD CORS blocked</strong> — tax lookup requires a Cloudflare Worker proxy.<br><span style="color:var(--text3); font-size:11px;">${e.message}</span>`;
   }
-  btn.disabled = false;
+}
+
+function extractAddressFromURL(url) {
+  try {
+    const { hostname, pathname } = new URL(url);
+    let slug = null;
+    if (hostname.includes('compass.com'))   slug = pathname.match(/\/homedetails\/([^/]+)\//)?.[1];
+    if (hostname.includes('zillow.com'))    slug = pathname.match(/\/homedetails\/([^_/]+)/)?.[1];
+    if (hostname.includes('redfin.com'))    slug = pathname.match(/\/[A-Z]{2}\/[^/]+\/([^/]+)\/home/)?.[1];
+    if (hostname.includes('realtor.com'))   slug = pathname.match(/\/realestateandhomes-detail\/([^_/]+(?:_[^_/]+){0,2})/)?.[1]?.replace(/_/g,'-');
+    if (slug) return slug.replace(/-/g,' ');
+  } catch {}
+  return null;
+}
+
+function parseListingHTML(html, url) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // 1. JSON-LD schema.org
+  for (const s of doc.querySelectorAll('script[type="application/ld+json"]')) {
+    try {
+      const items = [JSON.parse(s.textContent)].flat();
+      for (const item of items) {
+        for (const g of (item['@graph'] ? [item,...item['@graph']] : [item])) {
+          const price = g.offers?.price ?? g.price ?? g.listPrice;
+          if (price) return { price: parseInt(String(price).replace(/\D/g,'')), address: g.name ?? g.address?.streetAddress };
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Next.js __NEXT_DATA__ (Zillow)
+  try {
+    const nd = JSON.parse(doc.querySelector('script#__NEXT_DATA__')?.textContent || 'null');
+    const pp = nd?.props?.pageProps;
+    const price = pp?.initialData?.building?.price ?? pp?.listing?.price ?? pp?.homeDetails?.price;
+    if (price) return { price: parseInt(price) };
+  } catch {}
+
+  // 3. Inline JS state blobs (Compass listPrice, Redfin price)
+  for (const s of doc.querySelectorAll('script:not([src])')) {
+    const m = s.textContent.match(/"listPrice"\s*:\s*(\d+)/) ?? s.textContent.match(/"listingPrice"\s*:\s*(\d+)/);
+    if (m) return { price: parseInt(m[1]) };
+  }
+
+  // 4. Open Graph meta
+  const ogPrice = doc.querySelector('meta[property="product:price:amount"]')?.content ?? doc.querySelector('meta[name="price"]')?.content;
+  if (ogPrice) return { price: parseInt(ogPrice.replace(/\D/g,'')), address: doc.querySelector('meta[property="og:title"]')?.content };
+
+  // 5. Text scan fallback
+  const m = (doc.body?.textContent||'').match(/(?:list(?:ing)?\s*price|asking\s*price)[:\s$]*([\d,]+)/i);
+  if (m) return { price: parseInt(m[1].replace(/,/g,'')) };
+
+  return {};
 }
 
 buildRateTable();
