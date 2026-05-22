@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tracker Item Inserter - Outlook add-in (XML / "add-in only" manifest).
+
+  NOTE: BUILD_PLAN.md calls this "manifest.json", but new Outlook / OWA
+  "Add a custom add-in -> Add from URL" expects the XML manifest. Use this file.
+
+  Before sideloading (Phase E), replace every bloomtechstudio.com with the
+  HTTPS host you deploy to (e.g. your-app.azurestaticapps.net or *.pages.dev).
+  The <Id> GUID below is already unique to this add-in - leave it.
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
+  xsi:type="MailApp">
+
+  <Id>f8f2367a-8ac3-4e47-85d2-79beeed5bdd8</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Jodie Crouch</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Tracker Item Inserter"/>
+  <Description DefaultValue="Search the NLA Issue Tracker and OLG Regional Tracker and insert a formatted item reference into your email at the cursor."/>
+  <IconUrl DefaultValue="https://bloomtechstudio.com/assets/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://bloomtechstudio.com/assets/icon-80.png"/>
+  <SupportUrl DefaultValue="https://bloomtechstudio.com/terms.html"/>
+
+  <AppDomains>
+    <AppDomain>https://bloomtechstudio.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Mailbox"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets>
+      <Set Name="Mailbox" MinVersion="1.3"/>
+    </Sets>
+  </Requirements>
+
+  <FormSettings>
+    <Form xsi:type="ItemEdit">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://bloomtechstudio.com/taskpane.html"/>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+
+  <Permissions>ReadWriteItem</Permissions>
+
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Edit"/>
+  </Rule>
+
+  <DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Requirements>
+      <bt:Sets DefaultMinVersion="1.3">
+        <bt:Set Name="Mailbox"/>
+      </bt:Sets>
+    </Requirements>
+
+    <Hosts>
+      <Host xsi:type="MailHost">
+        <DesktopFormFactor>
+          <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+            <OfficeTab id="TabDefault">
+              <Group id="trackerGroup">
+                <Label resid="groupLabel"/>
+                <Control xsi:type="Button" id="insertTrackerButton">
+                  <Label resid="buttonLabel"/>
+                  <Supertip>
+                    <Title resid="buttonTitle"/>
+                    <Description resid="buttonDesc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon16"/>
+                    <bt:Image size="32" resid="icon32"/>
+                    <bt:Image size="80" resid="icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="taskpaneUrl"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="icon16" DefaultValue="https://bloomtechstudio.com/assets/icon-16.png"/>
+        <bt:Image id="icon32" DefaultValue="https://bloomtechstudio.com/assets/icon-32.png"/>
+        <bt:Image id="icon80" DefaultValue="https://bloomtechstudio.com/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="taskpaneUrl" DefaultValue="https://bloomtechstudio.com/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="groupLabel" DefaultValue="Tracker"/>
+        <bt:String id="buttonLabel" DefaultValue="Insert Tracker Item"/>
+        <bt:String id="buttonTitle" DefaultValue="Insert Tracker Item"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="buttonDesc" DefaultValue="Search the trackers and insert a formatted item reference at your cursor."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Insert Tracker Item</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    :root { --gold:#b8860b; --gold-dk:#8a6508; --ink:#222; --line:#e3e3e3; --muted:#666; }
+    * { box-sizing: border-box; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; margin: 0; color: var(--ink); font-size: 14px; }
+    header { padding: 10px 12px; border-bottom: 2px solid var(--gold); }
+    header h1 { margin: 0; font-size: 15px; }
+    .controls { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+    select, input[type="search"] { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 4px; font-size: 14px; }
+    #status { padding: 0 12px; color: var(--muted); font-size: 12px; min-height: 16px; }
+    #status.error { color: #b00020; }
+    #list { list-style: none; margin: 0; padding: 0 6px 16px; }
+    #list li { padding: 8px 10px; border: 1px solid var(--line); border-radius: 5px; margin: 6px 0; cursor: pointer; }
+    #list li:hover { border-color: var(--gold); background: #fffbe9; }
+    .title { font-weight: 600; }
+    .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pill { display: inline-block; padding: 1px 6px; border-radius: 10px; background: #f0f0f0; margin-right: 4px; font-size: 11px; }
+    .empty { color: var(--muted); padding: 12px; }
+  </style>
+</head>
+<body>
+  <header><h1>Insert Tracker Item</h1></header>
+
+  <div class="controls">
+    <select id="listPicker">
+      <option value="issue">NLA Issue Tracker</option>
+      <option value="regional">OLG Regional Tracker</option>
+    </select>
+    <input id="search" type="search" placeholder="Search title, owner, status, notes..." autocomplete="off" />
+  </div>
+
+  <div id="status"></div>
+  <ul id="list"><li class="empty">Loading...</li></ul>
+
+  <script>
+    // ===================== CONFIG =====================
+    // Set these to the RAW JSON URLs proven in Phase C (the cross-origin fetch test).
+    // Until then they are placeholders and the panel will show a fetch error.
+    const ENDPOINTS = {
+      issue:    "https://bloomtechstudio.com/nla-issue.json",
+      regional: "https://bloomtechstudio.com/olg-regional.json"
+    };
+    const LIST_LABEL = { issue: "NLA Issue Tracker", regional: "OLG Regional Tracker" };
+    // ==================================================
+
+    let officeReady = false;
+    const cache = {};            // { issue: [...], regional: [...] }
+    let current = [];            // currently displayed (filtered source) array
+    const $ = (id) => document.getElementById(id);
+
+    Office.onReady(() => { officeReady = true; });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      $("listPicker").addEventListener("change", () => loadList($("listPicker").value));
+      $("search").addEventListener("input", () => render());
+      loadList("issue");
+    });
+
+    function setStatus(msg, isError) {
+      const el = $("status");
+      el.textContent = msg || "";
+      el.className = isError ? "error" : "";
+    }
+
+    async function loadList(which) {
+      $("search").value = "";
+      if (cache[which]) { current = cache[which]; setStatus(`${current.length} items`); render(); return; }
+      setStatus(`Loading ${LIST_LABEL[which]}...`);
+      $("list").innerHTML = '<li class="empty">Loading...</li>';
+      const url = ENDPOINTS[which];
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("Endpoint did not return a JSON array");
+        cache[which] = data;
+        current = data;
+        setStatus(`${data.length} items`);
+        render();
+      } catch (e) {
+        current = [];
+        $("list").innerHTML = "";
+        setStatus(
+          "Could not load data: " + e.message +
+          ". Check the endpoint URL (Phase C/D) and that the JSON is reachable cross-origin.",
+          true
+        );
+      }
+    }
+
+    function render() {
+      const q = $("search").value.trim().toLowerCase();
+      const items = !q ? current : current.filter((it) =>
+        [it.title, it.status, it.owner, it.notes, it.id]
+          .map((v) => (v == null ? "" : String(v)).toLowerCase())
+          .some((s) => s.includes(q))
+      );
+      const ul = $("list");
+      if (!items.length) { ul.innerHTML = '<li class="empty">No matching items.</li>'; return; }
+      ul.innerHTML = "";
+      items.forEach((it) => {
+        const li = document.createElement("li");
+        const meta = [it.status, it.owner].filter(Boolean)
+          .map((v) => `<span class="pill">${escapeHtml(v)}</span>`).join("");
+        li.innerHTML =
+          `<div class="title">${escapeHtml(it.title || "(untitled)")}</div>` +
+          (meta ? `<div class="meta">${meta}</div>` : "");
+        li.addEventListener("click", () => insertItem(it));
+        ul.appendChild(li);
+      });
+    }
+
+    // Format dropped into the email body at the cursor. Edit this template to taste.
+    function buildHtml(it) {
+      const row = (label, val) =>
+        val ? `<div><strong>${escapeHtml(label)}:</strong> ${escapeHtml(val)}</div>` : "";
+      return (
+        `<div style="border-left:3px solid #b8860b;padding-left:10px;margin:6px 0;">` +
+        `<div style="font-weight:600;">${escapeHtml(it.title || "(untitled)")}</div>` +
+        row("Status", it.status) +
+        row("Owner", it.owner) + row("Notes", it.notes) +
+        (it.id ? `<div style="color:#666;font-size:12px;">ID: ${escapeHtml(it.id)}</div>` : "") +
+        `</div>`
+      );
+    }
+
+    function insertItem(it) {
+      if (!officeReady || !Office.context || !Office.context.mailbox) {
+        setStatus("Insert works only inside Outlook (open via the Insert Tracker Item button).", true);
+        return;
+      }
+      Office.context.mailbox.item.body.setSelectedDataAsync(
+        buildHtml(it),
+        { coercionType: Office.CoercionType.Html },
+        (r) => {
+          if (r.status === Office.AsyncResultStatus.Succeeded) setStatus("Inserted: " + (it.title || it.id));
+          else setStatus("Insert failed: " + r.error.message, true);
+        }
+      );
+    }
+
+    function escapeHtml(v) {
+      return String(v == null ? "" : v)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+</html>
