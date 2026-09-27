@@ -275,16 +275,15 @@
       </div>
 
       <h3>Age Verification at Signup</h3>
-      <p>During account creation, users are asked to confirm they meet the minimum age requirement. We use a date-of-birth gate to enforce this requirement. If a user indicates they are under 13, account creation is blocked and no personal information is retained from that attempt. We do not store the date of birth entered during a blocked registration.</p>
+      <p>During account creation, users are asked to confirm they meet the minimum age requirement. We use a date-of-birth gate to enforce this requirement. If a user enters a date of birth indicating they are under 13, account creation is blocked, the account created at sign-in is deleted, and the date entered is not stored. A date of birth cannot be changed in the app once set.</p>
 
       <h3>Accounts for Users Ages 13–17</h3>
       <p>Users between the ages of 13 and 17 may create accounts, subject to the following additional restrictions designed to protect their privacy and safety:</p>
       <ul>
         <li><strong>Content visibility:</strong> Any Moments (photos or videos) uploaded by a minor account are held in a moderation queue and reviewed before being published, regardless of the automated screening result. A stricter NSFW threshold is applied.</li>
-        <li><strong>Event discovery:</strong> Minor accounts cannot be discovered through public event browsing. Their profiles are not shown to users they do not share an event with.</li>
-        <li><strong>Default privacy:</strong> The default content visibility for minor accounts is set to "event attendees only." Minor users cannot be found through general user search.</li>
-        <li><strong>Direct messaging:</strong> Minor accounts cannot receive direct messages from users who are not confirmed attendees of a shared event.</li>
-        <li><strong>Content display:</strong> Content that has been flagged or rated as potentially mature by our moderation system is not shown to users with minor accounts, even if the content passed automated screening at the standard threshold.</li>
+        <li><strong>Visibility:</strong> A minor's profile, and their RSVPs in guest lists, are visible only to people who know them: people going to or hosting an event with them, and people they are friends with or have a pending friend request with. Minor accounts do not appear in user search, public guest lists, or to anyone who is not signed in.</li>
+        <li><strong>Direct messaging:</strong> Minor accounts can only receive direct messages from people who are going to or hosting an event with them.</li>
+        <li><strong>Content display:</strong> Moments that our moderation system scores as potentially mature are not shown to users with minor accounts, even if they passed screening at the standard threshold.</li>
       </ul>
 
       <h3>Parental Rights</h3>
